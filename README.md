@@ -61,7 +61,21 @@ pip install -r requirements.txt
 cp .env.example .env   # then add your OPENAI_API_KEY
 ```
 
-## Status
+## Run
 
-Early scaffold. See [docs/plan.md](docs/plan.md) for the build plan and
-[docs/pitch.md](docs/pitch.md) for the pitch.
+```bash
+# Benchmark the judge against human gold labels (needs OPENAI_API_KEY)
+PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
+
+# Dashboard (works offline via the "Seed demo data" button)
+PYTHONPATH=src streamlit run app/ui.py
+
+# API
+PYTHONPATH=src uvicorn app.api:app --reload
+```
+
+## Docs
+
+- [docs/report.md](docs/report.md) - full assignment write-up (problem, market, architecture, implementation, KPIs).
+- [docs/pitch.md](docs/pitch.md) - the pitch.
+- [docs/plan.md](docs/plan.md) - the build plan.
