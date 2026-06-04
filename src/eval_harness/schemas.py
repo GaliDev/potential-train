@@ -22,6 +22,7 @@ class TaskType(str, Enum):
 
     RAG_QA = "rag_qa"
     SUMMARIZATION = "summarization"
+    TRANSLATION = "translation"
 
 
 class Criterion(str, Enum):

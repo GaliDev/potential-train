@@ -1,9 +1,10 @@
 """The managed fleet under evaluation.
 
-Two task types (RAG Q&A and summarization), each served by three competing
-agent configs: a strong model, a cheaper model, and a deliberately weaker
-prompt variant. The performance gaps are intentional - they make routing,
-autonomy tiers, and performance reviews show clear, demo-able differences.
+Three task types (RAG Q&A, summarization, and translation), each served by
+three competing agent configs: a strong model, a cheaper model, and a
+deliberately weaker prompt variant. The performance gaps are intentional -
+they make routing, autonomy tiers, and performance reviews show clear,
+demo-able differences.
 """
 
 from __future__ import annotations
@@ -36,6 +37,19 @@ _SUM_STRONG = (
 _SUM_WEAK = (
     "Write a very short, catchy one-line summary of the source. Prioritize being "
     "punchy over being complete."
+)
+
+_TRANS_STRONG = (
+    "You are a professional translator. Translate the source text into the "
+    "requested target language. Preserve the full meaning, names, numbers, and "
+    "tone. Produce fluent, natural output in the target language. Do not add, "
+    "drop, or comment on anything - output only the translation."
+)
+
+_TRANS_WEAK = (
+    "Quickly translate the text word for word. Don't worry about grammar, "
+    "fluency, idioms, or small details - just give a fast, rough literal "
+    "translation."
 )
 
 
@@ -114,6 +128,31 @@ def build_fleet() -> list[FleetAgent]:
                 description="Cheap model with a one-liner prompt. Expected to drop key points.",
             ),
             system_prompt=_SUM_WEAK, temperature=0.9,
+        ),
+        # --- Translation ---
+        FleetAgent(
+            profile=AgentProfile(
+                agent_id="trans_strong", name="Translator Pro (gpt-4o)", task_type=TaskType.TRANSLATION,
+                model=strong, prompt_variant="professional",
+                description="Strong model, professional translator prompt. Expected best quality.",
+            ),
+            system_prompt=_TRANS_STRONG, temperature=0.1,
+        ),
+        FleetAgent(
+            profile=AgentProfile(
+                agent_id="trans_cheap", name="Translator Lite (gpt-4o-mini)", task_type=TaskType.TRANSLATION,
+                model=cheap, prompt_variant="professional",
+                description="Cheaper model, same professional prompt. Cost/quality trade-off.",
+            ),
+            system_prompt=_TRANS_STRONG, temperature=0.1,
+        ),
+        FleetAgent(
+            profile=AgentProfile(
+                agent_id="trans_weak", name="Translator Literal (gpt-4o-mini)", task_type=TaskType.TRANSLATION,
+                model=cheap, prompt_variant="literal",
+                description="Cheap model with a word-for-word prompt. Expected to be unfaithful/disfluent.",
+            ),
+            system_prompt=_TRANS_WEAK, temperature=0.9,
         ),
     ]
 

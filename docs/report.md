@@ -39,8 +39,9 @@ at *measuring* quality - scores, traces, dashboards.
 
 **Technical discovery.**
 
-- **Data availability:** Public human-labeled eval data (SummEval) for
-  credibility, plus a small hand-labeled gold set we control for the demo domain.
+- **Data availability:** Public human-labeled eval data (SummEval for
+  summarization, WMT for translation) for credibility, plus small hand-labeled
+  gold sets we control for the demo domain.
 - **Feasibility:** LLM-as-judge is well established; the novel work is the
   governance layer and validating the judge against human labels.
 - **Key risk:** Judge reliability. Mitigated by measuring agreement with humans
@@ -63,7 +64,7 @@ routing, autonomy calibration, performance reviews, and policy enforcement.
 
 ```mermaid
 flowchart TD
-    Fleet["Managed fleet: 6 agent configs x 2 task types"] --> Gen[Output generator]
+    Fleet["Managed fleet: 9 agent configs x 3 task types"] --> Gen[Output generator]
     Gen --> Pre[Preprocessor]
     subgraph eval [Eval Engine - LangGraph panel]
       Pre --> Correct[Correctness]
@@ -113,13 +114,13 @@ flowchart TD
 - **Output (governance):** routing decision, autonomy tier, performance review.
 - **Success metric:** agreement of the judge's verdicts with human gold labels.
 - **Target:** >= 80% pass/fail accuracy and Cohen's kappa >= 0.6 (Spearman >= 0.7).
-- **Minimum viable test set:** 16-item hand-labeled RAG gold set (balanced 8/8)
-  + a public SummEval slice.
+- **Minimum viable test set:** hand-labeled RAG, summarization, and translation
+  gold sets, plus optional public SummEval and WMT slices.
 
 **Development steps.**
 
-1. **Data preparation** - hand-labeled gold set in `data/gold/`, plus a cached
-   SummEval loader ([loaders.py](../src/eval_harness/datasets/loaders.py)).
+1. **Data preparation** - hand-labeled gold sets in `data/gold/`, plus cached
+   SummEval and WMT loaders ([loaders.py](../src/eval_harness/datasets/loaders.py)).
 2. **Model integration** - OpenAI wrapper with structured output and per-call
    cost/latency tracking ([llm.py](../src/eval_harness/llm.py)).
 3. **Application logic** - LangGraph judge panel + aggregator
@@ -156,8 +157,8 @@ flowchart TD
 ## 5. Pitch
 
 See [pitch.md](pitch.md). Demo flow: seed/benchmark -> show fleet leaderboard ->
-autonomy tiers -> route a task -> generate a performance review -> policy check +
-audit log.
+autonomy tiers -> route a RAG, summarization, or translation task -> generate a
+performance review -> policy check + audit log.
 
 ## Code repository
 
@@ -172,6 +173,9 @@ cp .env.example .env   # add OPENAI_API_KEY
 
 # Benchmark the judge vs gold labels (needs API key)
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
+
+# Optional: include public translation labels from WMT
+PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 40
 
 # Explore the dashboard (works offline via "Seed demo data")
 PYTHONPATH=src streamlit run app/ui.py

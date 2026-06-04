@@ -30,6 +30,8 @@ from eval_harness.store import fetch_audit, list_agents  # noqa: E402
 
 st.set_page_config(page_title="Agent Workforce Governance", layout="wide")
 
+TASK_OPTIONS = [tt.value for tt in TaskType]
+
 TIER_LABELS = {
     "full_auto": "Full auto",
     "auto_spot_check": "Auto + spot check",
@@ -44,7 +46,7 @@ def _task_type_from_label(label: str) -> TaskType | None:
 
 # --- Sidebar -------------------------------------------------------------
 st.sidebar.title("Agent Workforce Governance")
-task_label = st.sidebar.selectbox("Task type", ["All", TaskType.RAG_QA.value, TaskType.SUMMARIZATION.value])
+task_label = st.sidebar.selectbox("Task type", ["All", *TASK_OPTIONS])
 task_type = _task_type_from_label(task_label)
 
 st.sidebar.markdown("---")
@@ -58,7 +60,10 @@ if not has_data:
             "or run the benchmark with your OpenAI key to populate real results.")
 
 st.title("Agent Workforce Governance")
-st.caption("Manage a fleet of AI agents like a team - the four questions eval platforms skip.")
+st.caption(
+    "Manage a fleet of RAG, summarization, and translation agents like a team - "
+    "the four questions eval platforms skip."
+)
 
 tabs = st.tabs(
     ["Fleet leaderboard", "Autonomy tiers", "Task routing", "Performance reviews", "Governance & audit"]
@@ -144,7 +149,7 @@ with tabs[4]:
     if agents:
         c1, c2, c3 = st.columns(3)
         agent_id = c1.selectbox("Agent", [a.agent_id for a in agents], key="policy_agent")
-        pol_tt = c2.selectbox("Task type", [TaskType.RAG_QA.value, TaskType.SUMMARIZATION.value], key="policy_tt")
+        pol_tt = c2.selectbox("Task type", TASK_OPTIONS, key="policy_tt")
         risk = c3.selectbox("Task risk", [r.value for r in policy.TaskRisk], key="policy_risk")
         if st.button("Evaluate policy"):
             decision = policy.decide_for_agent(agent_id, TaskType(pol_tt), policy.TaskRisk(risk))

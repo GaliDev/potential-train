@@ -85,13 +85,24 @@ def main() -> None:
     )
     parser.add_argument("--public", action="store_true", help="Include the public SummEval slice")
     parser.add_argument("--public-limit", type=int, default=40)
+    parser.add_argument("--wmt", action="store_true", help="Include the public WMT translation slice")
+    parser.add_argument("--wmt-limit", type=int, default=40)
     parser.add_argument("--persist", action="store_true", help="Write results to the store")
     parser.add_argument(
         "--with-improve", action="store_true", help="Also benchmark cascade + jury in compare mode"
     )
     args = parser.parse_args()
 
-    items = load_hybrid(public_limit=args.public_limit) if args.public else load_gold()
+    items = (
+        load_hybrid(
+            public_limit=args.public_limit,
+            include_public=args.public,
+            include_wmt=args.wmt,
+            wmt_limit=args.wmt_limit,
+        )
+        if args.public or args.wmt
+        else load_gold()
+    )
     print(f"Loaded {len(items)} labeled items.")
 
     single = {

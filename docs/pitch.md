@@ -29,6 +29,8 @@ The measurement problem is largely solved. The **management** problem is wide op
 
 An **Agent Workforce Governance platform**. Underneath it is a rigorous **multiagent LLM-as-judge eval engine** (built on LangGraph) that continuously scores every agent in the fleet across multiple criteria - correctness, faithfulness, completeness, coherence, and safety - and writes the results to a **performance store** over time.
 
+In the current proof of concept, the governed fleet handles three concrete task families - RAG question answering, summarization, and translation - with strong, cheap, and deliberately weaker agents for each family.
+
 We trust that engine because we hold it to a hard standard: its verdicts are validated against **human gold labels** (target: >= 80% agreement, Cohen's kappa >= 0.6). It is a judge we can prove is fair before we let it make calls.
 
 On top of that performance history sits the part competitors skip - a **governance layer** that turns scores into decisions.

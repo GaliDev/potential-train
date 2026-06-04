@@ -15,6 +15,11 @@ four questions other platforms skip:
 The judge engine is held to a hard standard: its verdicts are validated
 against human gold labels (target: >= 80% agreement, Cohen's kappa >= 0.6).
 
+The current managed fleet covers three demo task families: **RAG Q&A**,
+**summarization**, and **translation**. Each task family has a strong agent, a
+cheap agent, and a deliberately weaker prompt variant so routing, autonomy, and
+performance reviews have visible quality differences.
+
 ## Tech stack
 
 | Component        | Choice                          |
@@ -66,6 +71,9 @@ cp .env.example .env   # then add your OPENAI_API_KEY
 ```bash
 # Benchmark the judge against human gold labels (needs OPENAI_API_KEY)
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
+
+# Include public translation data (WMT) in addition to local gold labels
+PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 40
 
 # Dashboard (works offline via the "Seed demo data" button)
 PYTHONPATH=src streamlit run app/ui.py

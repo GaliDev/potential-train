@@ -19,17 +19,35 @@ def render_item_for_judge(item: TestItem) -> str:
     output being judged.
     """
     parts: list[str] = []
-    label = "Question" if item.task_type == TaskType.RAG_QA else "Task"
-    parts.append(f"{label}:\n{item.task_prompt}")
 
+    if item.task_type == TaskType.RAG_QA:
+        task_label, ctx_label, ref_label, cand_label = (
+            "Question",
+            "Context (source of truth)",
+            "Reference answer",
+            "Candidate response to evaluate",
+        )
+    elif item.task_type == TaskType.TRANSLATION:
+        task_label, ctx_label, ref_label, cand_label = (
+            "Translation request",
+            "Source text (the meaning to preserve)",
+            "Reference translation",
+            "Candidate translation to evaluate",
+        )
+    else:  # summarization
+        task_label, ctx_label, ref_label, cand_label = (
+            "Task",
+            "Source document",
+            "Reference answer",
+            "Candidate response to evaluate",
+        )
+
+    parts.append(f"{task_label}:\n{item.task_prompt}")
     if item.context:
-        ctx_label = "Context (source of truth)" if item.task_type == TaskType.RAG_QA else "Source document"
         parts.append(f"{ctx_label}:\n{item.context}")
-
     if item.reference:
-        parts.append(f"Reference answer:\n{item.reference}")
-
-    parts.append(f"Candidate response to evaluate:\n{item.candidate_output}")
+        parts.append(f"{ref_label}:\n{item.reference}")
+    parts.append(f"{cand_label}:\n{item.candidate_output}")
     return "\n\n".join(parts)
 
 

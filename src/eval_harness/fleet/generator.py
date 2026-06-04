@@ -1,7 +1,8 @@
 """Run fleet agents over tasks to produce the candidate outputs we evaluate.
 
-Given a set of tasks (a question + optional context for RAG, or a source
-document for summarization), each relevant fleet agent generates an output.
+Given a set of tasks (a question + optional context for RAG, a source document
+for summarization, or source text for translation), each relevant fleet agent
+generates an output.
 Those outputs become `TestItem`s that flow into the judge panel.
 """
 
@@ -20,6 +21,11 @@ def _build_user_prompt(item: TestItem) -> str:
     if item.task_type == TaskType.RAG_QA:
         ctx = item.context or "(no context provided)"
         return f"Context:\n{ctx}\n\nQuestion: {item.task_prompt}"
+    if item.task_type == TaskType.TRANSLATION:
+        # task_prompt is the translation instruction; context is the source text.
+        source = item.context or item.task_prompt
+        instruction = item.task_prompt if item.context else "Translate the following text."
+        return f"{instruction}\n\nText to translate:\n{source}"
     # Summarization: task_prompt is the instruction, context is the source doc.
     source = item.context or item.task_prompt
     instruction = item.task_prompt if item.context else "Summarize the following source."

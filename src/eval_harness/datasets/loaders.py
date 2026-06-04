@@ -1,8 +1,9 @@
 """Loaders for the hybrid benchmark set.
 
 - Custom gold set: hand-labeled JSONL under data/gold/ (tracked in git).
-- Public slice: SummEval summaries with human quality ratings, fetched via the
-  HuggingFace `datasets` library and mapped onto our TestItem schema.
+- Public slices: SummEval summaries and WMT translations with human quality
+  ratings, fetched via the HuggingFace `datasets` library and mapped onto our
+  TestItem schema.
 
 Both yield `TestItem`s carrying `gold_score` (1-5) and `gold_pass`, which the
 benchmark layer compares against the judge's verdicts.
@@ -123,6 +124,87 @@ def load_summeval(limit: int = 80, cache: bool = True) -> list[TestItem]:
     return items
 
 
+def _normalize_human_score(raw: float) -> float | None:
+    """Map a WMT human score onto our 1-5 scale.
+
+    WMT direct-assessment (DA) scores are usually raw 0-100; some mirrors store
+    them z-normalized around 0. We map 0-100 linearly to 1-5 and clamp; values
+    that look like a 0-1 fraction are scaled the same way.
+    """
+    try:
+        x = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if 0.0 <= x <= 1.0:
+        x *= 100.0
+    if x < 0.0 or x > 100.0:
+        return None
+    return round(1.0 + (x / 100.0) * 4.0, 3)
+
+
+def load_wmt(
+    limit: int = 60,
+    lang_pair: str | None = None,
+    dataset_name: str = "RicardoRei/wmt-da-human-evaluation",
+    cache: bool = True,
+) -> list[TestItem]:
+    """Load a slice of WMT human-rated translations as translation TestItems.
+
+    Each row carries a source (`src`), a machine translation (`mt`), an optional
+    reference (`ref`), and a human quality score that we normalize to 1-5.
+    Requires the `datasets` package and network access on first download; the
+    slice is cached to data/public/wmt.jsonl so later runs are offline.
+
+    NOTE: the exact public dataset schema/column names should be verified before
+    relying on this for grades - we read defensively across common field names.
+    """
+    cache_path = PUBLIC_DIR / "wmt.jsonl"
+    if cache and cache_path.exists():
+        return load_jsonl(cache_path)[:limit]
+
+    try:
+        from datasets import load_dataset
+    except ImportError as exc:  # pragma: no cover
+        raise RuntimeError(
+            "The 'datasets' package is required to fetch WMT. Install requirements.txt."
+        ) from exc
+
+    ds = load_dataset(dataset_name, split="train")
+    items: list[TestItem] = []
+    for i, row in enumerate(ds):
+        if len(items) >= limit:
+            break
+        lp = row.get("lp") or row.get("langpair") or row.get("language_pair")
+        if lang_pair is not None and lp != lang_pair:
+            continue
+        src = row.get("src") or row.get("source") or ""
+        mt = row.get("mt") or row.get("hypothesis") or row.get("translation") or ""
+        ref = row.get("ref") or row.get("reference")
+        raw = row.get("raw")
+        if raw is None:
+            raw = row.get("score") if row.get("score") is not None else row.get("mean")
+        score = _normalize_human_score(raw)
+        if not src or not mt or score is None:
+            continue
+        instruction = f"Translate the following ({lp})." if lp else "Translate the following text."
+        items.append(
+            TestItem(
+                id=f"wmt_{i}",
+                task_type=TaskType.TRANSLATION,
+                task_prompt=instruction,
+                context=str(src).strip(),
+                reference=str(ref).strip() if ref else None,
+                candidate_output=str(mt).strip(),
+                gold_score=score,
+                gold_pass=score >= PASS_THRESHOLD,
+            )
+        )
+
+    if cache:
+        save_jsonl(items, cache_path)
+    return items
+
+
 def save_jsonl(items: list[TestItem], path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,12 +217,23 @@ def save_jsonl(items: list[TestItem], path: str | Path) -> Path:
 def load_hybrid(
     public_limit: int = 60,
     include_public: bool = True,
+    include_wmt: bool = False,
+    wmt_limit: int = 60,
 ) -> list[TestItem]:
-    """The hybrid benchmark: custom gold set + a public SummEval slice."""
+    """The hybrid benchmark: custom gold set + optional public slices.
+
+    SummEval (summarization) is included by default; the WMT translation slice
+    is opt-in via `include_wmt` to avoid an extra download/cost when not needed.
+    """
     items = load_gold()
     if include_public:
         try:
             items.extend(load_summeval(limit=public_limit))
         except Exception as exc:  # noqa: BLE001 - public set is optional
             print(f"[loaders] Skipping public SummEval slice: {exc}")
+    if include_wmt:
+        try:
+            items.extend(load_wmt(limit=wmt_limit))
+        except Exception as exc:  # noqa: BLE001 - public set is optional
+            print(f"[loaders] Skipping public WMT slice: {exc}")
     return items

@@ -8,6 +8,9 @@ tests + docs).
 _Status as of this milestone: 14 commits, ~3,067 lines of Python, 40 passing
 tests. Live benchmark KPIs pending an OpenAI key._
 
+_Current extension: the fleet now includes translation, for 3 task types x 3
+agent configs = 9 agents, with 43 passing tests._
+
 ---
 
 ## 1. Project origin and key decisions
@@ -30,8 +33,8 @@ project - problem selection, market research, architecture, implementation
 | Orchestration | **LangGraph** | Explicit fan-out/join for judge panel |
 | LLM provider | **OpenAI** (`gpt-4o` + `gpt-4o-mini`) | Strong judging; mini enables cost cascade |
 | Stack | **Python** - FastAPI + Streamlit | Matches course methodology; fast to demo |
-| Managed fleet | **2 task types x 3 agent configs = 6 agents** | Controllable gaps for routing/autonomy demos |
-| Gold data | **Hybrid**: hand-labeled JSONL + optional SummEval public slice | Credibility + demo domain control |
+| Managed fleet | **3 task types x 3 agent configs = 9 agents** | Controllable gaps for routing/autonomy demos |
+| Gold data | **Hybrid**: hand-labeled JSONL + optional SummEval/WMT public slices | Credibility + demo domain control |
 | Team scope | **2 devs, ~10 days** (from plan) | Scoped fleet and features accordingly |
 
 **Four governance questions** (product differentiator):
@@ -71,7 +74,7 @@ project - problem selection, market research, architecture, implementation
 
 ```mermaid
 flowchart TD
-    Fleet["Managed fleet: 6 agents x 2 task types"] --> Gen[Output generator]
+    Fleet["Managed fleet: 9 agents x 3 task types"] --> Gen[Output generator]
     Gen --> Eval[Eval Engine - LangGraph judge panel]
     Eval --> Store[(SQLite performance store)]
     Gold["Human gold labels"] --> Bench[Benchmark metrics]
@@ -117,11 +120,11 @@ flowchart TD
 
 | Component | File(s) | Role |
 |---|---|---|
-| Fleet configs | `fleet/configs.py` | 6 agents with intentional quality gaps |
+| Fleet configs | `fleet/configs.py` | 9 agents with intentional quality gaps |
 | Generator | `fleet/generator.py` | Produce candidate outputs for evaluation |
-| Gold set | `data/gold/rag_qa_gold.jsonl` | 16 items, 8 pass / 8 fail |
-| Loaders | `datasets/loaders.py` | JSONL, gold, SummEval, hybrid |
-| Demo seeder | `demo_seed.py` | 72 synthetic evals for offline demo |
+| Gold sets | `data/gold/*.jsonl` | RAG Q&A, summarization, and translation examples |
+| Loaders | `datasets/loaders.py` | JSONL, gold, SummEval, WMT, hybrid |
+| Demo seeder | `demo_seed.py` | Synthetic evals for offline demo |
 | API | `app/api.py` | REST endpoints for all governance views |
 | Dashboard | `app/ui.py` | 5-tab Streamlit UI |
 
@@ -129,9 +132,9 @@ flowchart TD
 
 ## 4. Managed fleet (what gets evaluated)
 
-**Task types:** `rag_qa`, `summarization`
+**Task types:** `rag_qa`, `summarization`, `translation`
 
-**Six agents:**
+**Nine agents:**
 
 | Agent ID | Task | Model | Variant | Expected behavior |
 |---|---|---|---|---|
@@ -141,6 +144,9 @@ flowchart TD
 | `sum_strong` | Summarization | gpt-4o | faithful prompt | Best quality |
 | `sum_cheap` | Summarization | gpt-4o-mini | faithful prompt | Cheaper |
 | `sum_weak` | Summarization | gpt-4o-mini | one-liner prompt | Drops key points |
+| `trans_strong` | Translation | gpt-4o | professional prompt | Best quality |
+| `trans_cheap` | Translation | gpt-4o-mini | professional prompt | Cost/quality trade-off |
+| `trans_weak` | Translation | gpt-4o-mini | literal prompt | Unfaithful/disfluent translations |
 
 ---
 
@@ -178,7 +184,7 @@ coherence 15%; safety is a hard gate (not weighted).
 
 ## 7. Testing
 
-**40 pytest tests**, all offline (fake LLM client, temp SQLite DB):
+**43 pytest tests**, all offline (fake LLM client, temp SQLite DB):
 
 | Test file | Coverage |
 |---|---|
@@ -186,8 +192,8 @@ coherence 15%; safety is a hard gate (not weighted).
 | `test_store.py` | CRUD, upsert, audit |
 | `test_aggregator.py` | Weighting, safety gate, low-quality fail |
 | `test_metrics.py` | Perfect/partial agreement, edge cases |
-| `test_fleet.py` | 6 agents, prompt rendering |
-| `test_loaders.py` | Gold set, JSONL roundtrip |
+| `test_fleet.py` | 9 agents, prompt rendering |
+| `test_loaders.py` | Gold sets, summarization/translation labels, JSONL roundtrip |
 | `test_runner.py` | Persistence, error capture |
 | `test_autonomy.py` | All tier thresholds |
 | `test_governance.py` | End-to-end via demo seeder |
@@ -206,7 +212,7 @@ Run: `pytest` (from project root with `.venv` active).
 | Governance smoke test | `rag_weak` blocked; router picks strong/cheap |
 | FastAPI endpoints | All routes return expected data after seed |
 | Streamlit launch | HTTP 200 on port 8765 |
-| pytest | 40 passed |
+| pytest | 43 passed |
 
 ---
 
@@ -215,13 +221,13 @@ Run: `pytest` (from project root with `.venv` active).
 | Item | Status | Notes |
 |---|---|---|
 | Real benchmark KPIs | **Pending** | Needs `OPENAI_API_KEY` in `.env`; ~$1 for gold-set `--with-improve` |
-| Gold set expansion | **Partial** | 16 items (plan said 30-50); no summarization gold yet |
-| SummEval public slice | **Optional** | Loader exists; not cached unless `--public` run |
-| GitHub remote | **Not set** | Assignment asks for repo link |
+| Gold set expansion | **Done for POC** | Local gold coverage exists for RAG Q&A, summarization, and translation |
+| Public slices | **Optional** | SummEval via `--public`; WMT via `--wmt`; cached only after first run |
+| GitHub remote | **Done** | Repository link added to `docs/report.md` |
 | Slide deck | **Not built** | Pitch text exists; no presentation slides |
 | `calibration.py` | **Not implemented** | Mentioned in README/plan; bias mitigation not coded |
 | Fleet output generation (live) | **Not run** | Generator ready; needs API key |
-| Plan todo statuses in `plan.md` | **Stale** | Frontmatter still shows `pending`; work is complete |
+| Plan todo statuses in `plan.md` | **Done** | Frontmatter now reflects completed build work |
 
 ---
 
@@ -239,6 +245,7 @@ PYTHONPATH=src streamlit run app/ui.py   # click "Seed demo data"
 
 # Live (fill KPI table)
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
+PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 40
 
 # API
 PYTHONPATH=src uvicorn app.api:app --reload
@@ -249,7 +256,7 @@ PYTHONPATH=src uvicorn app.api:app --reload
 ## 11. Suggested next steps (priority order)
 
 1. Run real benchmark -> fill KPI table in `docs/report.md`
-2. Push to GitHub -> add repo link to report appendix
-3. Expand gold set (especially summarization) toward 30+ items
-4. Build 6-8 slide deck from `docs/pitch.md` + architecture diagram
-5. Record demo video backup for class presentation
+2. Commit and push the latest translation/summarization additions
+3. Build 6-8 slide deck from `docs/pitch.md` + architecture diagram
+4. Record demo video backup for class presentation
+5. Optional: add GitHub Actions CI for the offline test suite

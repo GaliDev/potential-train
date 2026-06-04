@@ -22,6 +22,9 @@ _PROFILE = {
     "sum_strong": (4.7, 0.0045, 1.8),
     "sum_cheap": (4.1, 0.0008, 0.9),
     "sum_weak": (2.6, 0.0006, 0.8),
+    "trans_strong": (4.7, 0.0044, 1.7),
+    "trans_cheap": (4.0, 0.0008, 0.9),
+    "trans_weak": (2.5, 0.0006, 0.8),
 }
 
 _QUALITY_CRITERIA = [

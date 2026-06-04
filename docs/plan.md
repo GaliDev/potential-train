@@ -4,37 +4,37 @@ overview: Build an Agent Workforce Governance platform (Python, LangGraph, OpenA
 todos:
   - id: scaffold
     content: "Scaffold Python project: requirements.txt (langgraph, langchain-openai, openai, pydantic, pandas, scipy, scikit-learn, fastapi, uvicorn, streamlit, python-dotenv, sqlmodel), .env.example, .gitignore, README, and src/app/data/evaluation folder structure."
-    status: pending
+    status: completed
   - id: schemas-store
     content: "Implement schemas.py (TestItem/JudgeVerdict/AggregateResult/AgentProfile/AutonomyTier/Policy) plus llm.py (OpenAI wrapper, model selection, token/cost tracking) and a SQLite performance store (registry + per-run results)."
-    status: pending
+    status: completed
   - id: fleet
-    content: "Define the managed fleet: 2 task types (RAG/Q&A + summarization) x 3 agent configs each (gpt-4o, gpt-4o-mini, weaker-prompt variant); add a generator that produces their outputs for evaluation."
-    status: pending
+    content: "Define the managed fleet: 3 task types (RAG/Q&A + summarization + translation) x 3 agent configs each (gpt-4o, gpt-4o-mini, weaker-prompt variant); add a generator that produces their outputs for evaluation."
+    status: completed
   - id: baseline
     content: "Build the single GPT-4o baseline judge with a simple prompt and a runner that scores the fleet outputs (establish baseline before complexity)."
-    status: pending
+    status: completed
   - id: datasets
     content: "Implement dataset loaders: ingest a public human-labeled eval slice + create the custom ~30-50 item hand-labeled gold set in data/gold/."
-    status: pending
+    status: completed
   - id: graph
     content: "Implement the multiagent judge panel (correctness/faithfulness/completeness/coherence/safety) + aggregator/meta-judge, orchestrated in graph.py via LangGraph; persist verdicts to the store."
-    status: pending
+    status: completed
   - id: metrics
     content: "Implement metrics.py + evaluation/benchmark.py to compute agreement (accuracy, Cohen's kappa, Spearman), latency, and cost vs the gold labels."
-    status: pending
+    status: completed
   - id: governance
     content: "Build the governance layer on top of the store: router (next-task assignment), autonomy calibrator (tiers from reliability), review generator (LLM-written per-agent scorecards), policy/governance engine + audit log."
-    status: pending
+    status: completed
   - id: improve
     content: "Add an improvement lever: quality (jury/debate + bias mitigation + calibration) and/or cost (gpt-4o-mini -> gpt-4o cascade); compare against baseline."
-    status: pending
+    status: completed
   - id: app
     content: "Build FastAPI endpoints + Streamlit dashboard: eval drill-down, fleet leaderboard, routing simulator, autonomy tiers, performance reviews, governance/audit views."
-    status: pending
+    status: completed
   - id: writeup
     content: "Draft assignment write-ups in docs/ (problem, market gap vs eval platforms, architecture diagram, POC scope, KPIs) and prepare the demo/pitch."
-    status: pending
+    status: completed
 isProject: true
 ---
 
@@ -51,11 +51,11 @@ Most tools stop at *scoring* model outputs. This platform manages a **fleet of A
 The eval engine's own quality is validated by **agreement with human gold labels** (accuracy, Cohen's kappa, Spearman) - the headline success metric that keeps the project rigorous.
 
 - Stack: Python, LangGraph, OpenAI (`gpt-4o` + `gpt-4o-mini`), Pydantic, SQLite (SQLModel) for the performance store, pandas/scipy/scikit-learn (metrics), FastAPI (API), Streamlit (dashboard).
-- Data: Hybrid - a public human-labeled eval slice (e.g. MT-Bench judgments or SummEval) + a custom ~30-50 item hand-labeled gold set in the demo domain.
+- Data: Hybrid - public human-labeled eval slices (SummEval for summarization, WMT for translation) + custom hand-labeled gold sets in the demo domain.
 
 ## Managed Fleet (the thing being governed)
-- 2 task types: **RAG/Q&A** and **summarization** (both have public gold data and are easy to grade).
-- 3 competing agent configs per task type = **6 logical agents**: `gpt-4o`, `gpt-4o-mini`, and a deliberately weaker prompt/temperature variant.
+- 3 task types: **RAG/Q&A**, **summarization**, and **translation**.
+- 3 competing agent configs per task type = **9 logical agents**: `gpt-4o`, `gpt-4o-mini`, and a deliberately weaker prompt/temperature variant.
 - Deliberate performance gaps make routing, reviews, and autonomy tiers show clear, demo-able differences.
 
 ## POC Scope (assignment "Scoping Your POC" section)
@@ -71,7 +71,7 @@ The eval engine's own quality is validated by **agreement with human gold labels
 
 ```mermaid
 flowchart TD
-    Fleet["Managed fleet: 6 agent configs x 2 task types"] --> Gen[Output generator]
+    Fleet["Managed fleet: 9 agent configs x 3 task types"] --> Gen[Output generator]
     Gen --> Pre[Preprocessor: normalize, attach rubric, randomize position]
 
     subgraph eval [Eval Engine - LangGraph judge panel]

@@ -3,11 +3,12 @@ from eval_harness.fleet.generator import _build_user_prompt, make_task
 from eval_harness.schemas import TaskType
 
 
-def test_fleet_has_six_agents_two_task_types():
+def test_fleet_has_nine_agents_three_task_types():
     fleet = build_fleet()
-    assert len(fleet) == 6
+    assert len(fleet) == 9
     assert len(get_fleet(TaskType.RAG_QA)) == 3
     assert len(get_fleet(TaskType.SUMMARIZATION)) == 3
+    assert len(get_fleet(TaskType.TRANSLATION)) == 3
 
 
 def test_agent_ids_unique():
@@ -26,3 +27,14 @@ def test_summarization_prompt_uses_source():
     item = make_task(TaskType.SUMMARIZATION, "Summarize this.", context="Long source text.")
     prompt = _build_user_prompt(item)
     assert "Long source text." in prompt
+
+
+def test_translation_prompt_includes_instruction_and_source():
+    item = make_task(
+        TaskType.TRANSLATION,
+        "Translate the following from English to French.",
+        context="The cat sleeps.",
+    )
+    prompt = _build_user_prompt(item)
+    assert "The cat sleeps." in prompt
+    assert "English to French" in prompt
