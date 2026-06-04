@@ -159,6 +159,10 @@ See [pitch.md](pitch.md). Demo flow: seed/benchmark -> show fleet leaderboard ->
 autonomy tiers -> route a task -> generate a performance review -> policy check +
 audit log.
 
+## Code repository
+
+Full code repository: [GaliDev/potential-train](https://github.com/GaliDev/potential-train)
+
 ## How to run
 
 ```bash
