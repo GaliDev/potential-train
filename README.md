@@ -72,6 +72,9 @@ PYTHONPATH=src streamlit run app/ui.py
 
 # API
 PYTHONPATH=src uvicorn app.api:app --reload
+
+# Tests (offline, no API key needed)
+pytest
 ```
 
 ## Docs

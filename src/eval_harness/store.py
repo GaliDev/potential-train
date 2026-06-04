@@ -79,6 +79,12 @@ def init_db() -> None:
     SQLModel.metadata.create_all(_engine)
 
 
+def reset_db() -> None:
+    """Drop and recreate all tables. Intended for tests."""
+    SQLModel.metadata.drop_all(_engine)
+    SQLModel.metadata.create_all(_engine)
+
+
 def get_session() -> Session:
     return Session(_engine)
 
