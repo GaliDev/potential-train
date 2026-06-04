@@ -50,23 +50,6 @@ def load_gold(task_type: TaskType | None = None) -> list[TestItem]:
     return items
 
 
-def _normalize_summeval_score(expert_scores: list[dict] | dict | None) -> float | None:
-    """Average SummEval expert ratings (1-5) across dimensions and annotators."""
-    if not expert_scores:
-        return None
-    dims = ("coherence", "consistency", "fluency", "relevance")
-    vals: list[float] = []
-    annotators = expert_scores if isinstance(expert_scores, list) else [expert_scores]
-    for ann in annotators:
-        for d in dims:
-            v = ann.get(d)
-            if v is not None:
-                vals.append(float(v))
-    if not vals:
-        return None
-    return round(sum(vals) / len(vals), 3)
-
-
 def load_summeval(limit: int = 80, cache: bool = True) -> list[TestItem]:
     """Load a slice of SummEval as summarization TestItems with gold labels.
 
@@ -91,7 +74,6 @@ def load_summeval(limit: int = 80, cache: bool = True) -> list[TestItem]:
             break
         text = row.get("text") or row.get("article") or ""
         machine = row.get("machine_summaries") or []
-        human_scores = row.get("relevance") or row.get("expert_annotations")
         # mteb/summeval stores parallel lists of machine summaries and scores.
         rel = row.get("relevance") or []
         con = row.get("consistency") or []

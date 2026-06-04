@@ -19,6 +19,8 @@ from .schemas import AgentProfile, AggregateResult, TaskType, utcnow
 
 class AgentRow(SQLModel, table=True):
     __tablename__ = "agents"
+    # Allow re-import without "table already defined" (e.g. Streamlit hot-reload).
+    __table_args__ = {"extend_existing": True}
 
     agent_id: str = Field(primary_key=True)
     name: str
@@ -31,6 +33,7 @@ class AgentRow(SQLModel, table=True):
 
 class EvalRow(SQLModel, table=True):
     __tablename__ = "evals"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     item_id: str = Field(index=True)
@@ -49,6 +52,7 @@ class EvalRow(SQLModel, table=True):
 
 class AuditRow(SQLModel, table=True):
     __tablename__ = "audit_log"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     ts: datetime = Field(default_factory=utcnow, index=True)
