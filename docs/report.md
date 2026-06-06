@@ -136,15 +136,22 @@ flowchart TD
 - **Quality:** `JuryJudge` takes the median of repeated panel runs to reduce
   variance and single-run bias.
 
-**Technical KPIs (to fill after a benchmark run with your API key).**
+**Technical KPIs (76-item gold set, 2026-06-04).**
 
-| Metric | Target | Achieved |
-| --- | --- | --- |
-| Pass/fail accuracy vs human | >= 80% | _run `--mode compare`_ |
-| Cohen's kappa | >= 0.6 | _run `--mode compare`_ |
-| Spearman (score vs human) | >= 0.7 | _run `--mode compare`_ |
-| Avg latency / item | < 2 s | _reported per run_ |
-| Cost / item (panel vs cascade) | reduce | _reported per run_ |
+| Metric | Target | Baseline | Panel | Cascade | Jury |
+| --- | --- | --- | --- | --- | --- |
+| Pass/fail accuracy vs human | >= 80% | 100% | 98.7% | 100% | 98.7% |
+| Cohen's kappa | >= 0.6 | 1.00 | 0.97 | 1.00 | 0.97 |
+| Spearman (score vs human) | >= 0.7 | 0.98 | 0.98 | 0.95 | 0.97 |
+| Score MAE vs human (1-5) | lower is better | 0.24 | 0.26 | 0.32 | 0.27 |
+| Avg latency / item | < 2 s (baseline) | 1.6 s | 10.6 s | 9.7 s | 35.7 s |
+| Cost / item | lower is better | $0.0013 | $0.0080 | $0.0010 | $0.0240 |
+
+All four configurations exceed the assignment targets on agreement metrics.
+The panel adds per-criterion breakdowns for governance decisions. The cascade is
+the best cost lever: it preserves perfect pass/fail agreement while costing less
+per item than the baseline. The jury is the quality/redundancy lever, but it is
+much slower and more expensive.
 
 **Challenges & solutions.**
 

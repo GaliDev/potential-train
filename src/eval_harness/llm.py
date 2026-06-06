@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from functools import wraps
 from typing import TypeVar
 
-from openai import OpenAI
+from openai import APIConnectionError, APITimeoutError, InternalServerError, OpenAI, RateLimitError
 from pydantic import BaseModel
 
 from .config import settings
@@ -23,11 +24,34 @@ _PER_1M = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
 }
 
+_MAX_RETRIES = 6
+_RETRY_BASE_DELAY_S = 1.0
+_RETRYABLE_ERRORS = (RateLimitError, APITimeoutError, APIConnectionError, InternalServerError)
+
 
 def _price(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     # Fall back to the gpt-4o rate for unknown models so cost is never zero.
     rates = _PER_1M.get(model, _PER_1M["gpt-4o"])
     return (prompt_tokens * rates["input"] + completion_tokens * rates["output"]) / 1_000_000
+
+
+def _with_retries(fn):
+    """Retry transient OpenAI failures, especially TPM rate-limit bursts."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        last_exc = None
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                return fn(*args, **kwargs)
+            except _RETRYABLE_ERRORS as exc:
+                last_exc = exc
+                if attempt >= _MAX_RETRIES:
+                    raise
+                delay = _RETRY_BASE_DELAY_S * (2 ** attempt)
+                time.sleep(min(delay, 30.0))
+        raise last_exc  # pragma: no cover - loop always returns or raises earlier
+
+    return wrapper
 
 
 @dataclass
@@ -68,7 +92,7 @@ class LLMClient:
             raise RuntimeError(
                 "OPENAI_API_KEY is not set. Copy .env.example to .env and add your key."
             )
-        self._client = OpenAI(api_key=key)
+        self._client = OpenAI(api_key=key, timeout=settings.openai_timeout_s)
 
     def complete_text(
         self,
@@ -81,7 +105,7 @@ class LLMClient:
         model = model or settings.judge_model
         temperature = settings.judge_temperature if temperature is None else temperature
         start = time.perf_counter()
-        resp = self._client.chat.completions.create(
+        resp = _with_retries(self._client.chat.completions.create)(
             model=model,
             temperature=temperature,
             messages=[
@@ -105,7 +129,7 @@ class LLMClient:
         model = model or settings.judge_model
         temperature = settings.judge_temperature if temperature is None else temperature
         start = time.perf_counter()
-        resp = self._client.beta.chat.completions.parse(
+        resp = _with_retries(self._client.beta.chat.completions.parse)(
             model=model,
             temperature=temperature,
             messages=[

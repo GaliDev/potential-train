@@ -75,6 +75,9 @@ PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
 # Include public translation data (WMT) in addition to local gold labels
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 40
 
+# Populate the dashboard with real fleet outputs + persisted panel judgments
+PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
+
 # Dashboard (works offline via the "Seed demo data" button)
 PYTHONPATH=src streamlit run app/ui.py
 

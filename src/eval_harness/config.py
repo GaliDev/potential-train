@@ -30,6 +30,7 @@ class Settings(BaseModel):
     judge_model: str = "gpt-4o"
     judge_model_cheap: str = "gpt-4o-mini"
     judge_temperature: float = 0.0
+    openai_timeout_s: float = 60.0
     max_concurrency: int = 5
     database_url: str = "sqlite:///data/governance.db"
 
@@ -46,6 +47,7 @@ def get_settings() -> Settings:
         judge_model=os.getenv("JUDGE_MODEL", "gpt-4o"),
         judge_model_cheap=os.getenv("JUDGE_MODEL_CHEAP", "gpt-4o-mini"),
         judge_temperature=float(os.getenv("JUDGE_TEMPERATURE", "0.0")),
+        openai_timeout_s=float(os.getenv("OPENAI_TIMEOUT_S", "60.0")),
         max_concurrency=int(os.getenv("MAX_CONCURRENCY", "5")),
         database_url=os.getenv("DATABASE_URL", "sqlite:///data/governance.db"),
     )
