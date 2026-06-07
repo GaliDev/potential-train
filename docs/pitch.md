@@ -21,9 +21,9 @@ The result: the wrong agent lands on the wrong task, agents are given too much (
 - **Model and config sprawl.** There are dozens of viable models and prompt configurations, and performance varies sharply by task type. Picking the right one per task is now a real, recurring decision - not a one-time setup.
 - **Cost and reliability pressure.** Teams need to route work to the *cheapest agent that is good enough*, and to know which agents are trustworthy enough to run unattended.
 - **Governance is arriving.** Regulation and internal risk policies (e.g. the EU AI Act's push for human oversight and audit trails) increasingly demand that automated decisions be explainable, gated, and logged.
-- **The tooling gap is exposed.** Eval/observability tools have matured at *measuring* quality, but nobody owns the **decision layer** that turns those measurements into who-does-what, how-much-autonomy, and policy enforcement.
+- **The tooling gap is exposed.** Routers, eval/observability tools, and governance suites have each matured - but as separate silos. No one connects them into a **decision layer** that turns *measured competence* into who-does-what, how-much-autonomy, and policy enforcement.
 
-The measurement problem is largely solved. The **management** problem is wide open - and that is exactly the moment to build for it.
+The measurement problem is largely solved, and a fleet-management category is just starting to form. The piece still missing is the **integration** - tying a *validated* quality signal to routing, autonomy, and policy - and that is exactly the moment to build for it.
 
 ## Our Solution
 
@@ -33,9 +33,9 @@ In the current proof of concept, the governed fleet handles three concrete task 
 
 We trust that engine because we hold it to a hard standard: its verdicts are validated against **human gold labels** (target: >= 80% agreement, Cohen's kappa >= 0.6). It is a judge we can prove is fair before we let it make calls.
 
-On top of that performance history sits the part competitors skip - a **governance layer** that turns scores into decisions.
+On top of that performance history sits the part most tools still leave disconnected - a **governance layer** that turns scores into decisions.
 
-### The 4 Questions Other Platforms Skip
+### The 4 Questions a Score Can't Answer
 
 1. **Which agent should get the next task?**
    A performance-aware **router** picks the best agent for each incoming task using historical competence on that task type, plus reliability, cost, and latency - instead of a static default.

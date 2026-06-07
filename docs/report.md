@@ -26,14 +26,32 @@ trail.
 
 ## 2. Market Research & Technical Discovery
 
-**Market landscape.** Existing solutions cluster into eval/observability tools
-(e.g. LangSmith, Langfuse, Ragas, OpenAI Evals, Arize Phoenix). They are strong
-at *measuring* quality - scores, traces, dashboards.
+**Market landscape.** The capabilities this platform needs already exist in the
+market - but fragmented across four separate product categories, none of which
+closes the loop from *measured quality* into *governed action*:
 
-- **Market gap:** None of them own the *decision layer* that converts measured
-  quality into operational actions - task routing, autonomy tiers, performance
-  reviews, and policy enforcement across a fleet over time.
-- **Target audience:** Teams operating multiple agents in production who must
+| Category | Representative tools (2026) | What they do | What they leave open |
+| --- | --- | --- | --- |
+| Eval / observability | LangSmith, Langfuse, Arize Phoenix, Ragas, OpenAI Evals | Score quality, trace runs, replay against new model versions, 50+ eval metrics | Stop at dashboards - no routing, autonomy, or policy action |
+| LLM routers / gateways | OpenRouter, Portkey, LiteLLM, ClawRouters, Bifrost | Route requests across models by cost / latency / capability | Route on model price-capability, not measured per-agent, per-task competence |
+| AI governance / control | ServiceNow AI Control Tower, Salesforce Einstein Trust Layer | Policy enforcement, PII masking, audit trails for agent actions | Compliance-centric; autonomy not earned from a validated quality signal |
+| Agent workforce mgmt (emerging) | agnt8x, Salesforce Agentforce, Google Agent Inbox | "Manage agents like a team," orchestration, single audit trail | Orchestration / identity centric; no validated competence-based routing or earned autonomy |
+
+- **Market gap.** The honest gap is not that these capabilities are absent - by
+  2026 each pillar (routing, autonomy, reviews, policy) exists as a point
+  solution, and an "agent workforce management" category is actively forming. The
+  gap is that **no platform connects them around a validated competence signal**.
+  Routers route on price; eval tools measure and stop; governance suites enforce
+  policy. Our wedge is the integration: per-agent, per-task-type competence from a
+  judge we have *proven* trustworthy (agreement with human gold labels, Cohen's
+  kappa >= 0.6) drives both *who gets the task* and *how much autonomy* - with an
+  audit trail - as one accountable system rather than four disconnected ones.
+- **Why now.** Gartner forecasts ~40% of enterprise applications will embed
+  task-specific agents by end of 2026 (up from <5% in 2025), while McKinsey
+  reports only ~1 in 3 enterprises are governance-ready for autonomous agents. The
+  pain is real and the category is still forming - the right moment to build the
+  integration layer.
+- **Target audience.** Teams operating multiple agents in production who must
   control cost, reliability, and governance (platform/ML-ops engineers, eng
   managers, risk/compliance).
 
