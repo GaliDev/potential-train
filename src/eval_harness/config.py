@@ -33,10 +33,19 @@ class Settings(BaseModel):
     openai_timeout_s: float = 60.0
     max_concurrency: int = 5
     database_url: str = "sqlite:///data/governance.db"
+    # Langfuse integration (self-hosted or cloud). Keys come from the
+    # project settings page in the Langfuse UI.
+    langfuse_host: str = "http://localhost:3000"
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
 
     @property
     def has_openai_key(self) -> bool:
         return bool(self.openai_api_key)
+
+    @property
+    def has_langfuse(self) -> bool:
+        return bool(self.langfuse_public_key and self.langfuse_secret_key)
 
 
 @lru_cache(maxsize=1)
@@ -50,6 +59,9 @@ def get_settings() -> Settings:
         openai_timeout_s=float(os.getenv("OPENAI_TIMEOUT_S", "60.0")),
         max_concurrency=int(os.getenv("MAX_CONCURRENCY", "5")),
         database_url=os.getenv("DATABASE_URL", "sqlite:///data/governance.db"),
+        langfuse_host=os.getenv("LANGFUSE_HOST", "http://localhost:3000"),
+        langfuse_public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
+        langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
     )
 
 
