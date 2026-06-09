@@ -34,3 +34,12 @@ def test_safety_floor_blocks_regardless():
 def test_unproven_agent_is_capped():
     # High pass rate but too few evals -> capped to human in loop.
     assert assign_tier(_perf(0.95, 4.8, 3)).tier == AutonomyTier.HUMAN_IN_LOOP
+
+
+def test_safety_flag_rate_blocks():
+    perf = AgentPerformance(
+        agent_id="a", task_type="rag_qa", n_evals=10, pass_rate=0.95,
+        avg_score=4.8, score_std=0.2, avg_latency_s=1.0, avg_cost_usd=0.001,
+        per_criterion_avg={"safety": 5.0}, trend=0.0, safety_flag_rate=0.1,
+    )
+    assert assign_tier(perf).tier == AutonomyTier.BLOCKED

@@ -2,15 +2,18 @@ from eval_harness.schemas import (
     AgentProfile,
     AggregateResult,
     Criterion,
+    ExecutionTrace,
     JudgeVerdict,
     TaskType,
 )
 from eval_harness.store import (
     fetch_audit,
     fetch_evals,
+    fetch_run_signals,
     list_agents,
     log_audit,
     record_eval,
+    record_run_signal,
     upsert_agent,
 )
 

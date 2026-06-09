@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 from sqlmodel import Field, Session, SQLModel, select
 
 from .config import PROJECT_ROOT, settings
-from .schemas import AgentProfile, AggregateResult, TaskType, utcnow
+from .schemas import AgentProfile, AggregateResult, ExecutionTrace, TaskType, utcnow
 
 
 class AgentRow(SQLModel, table=True):
@@ -47,6 +47,33 @@ class EvalRow(SQLModel, table=True):
     verdicts_json: str = "[]"
     total_cost_usd: float = 0.0
     total_latency_s: float = 0.0
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+
+
+class RunSignalRow(SQLModel, table=True):
+    """Per-execution operational telemetry (uptime, latency, tools, drift inputs)."""
+
+    __tablename__ = "run_signals"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    item_id: str = Field(index=True)
+    agent_id: str = Field(index=True)
+    task_type: str = Field(index=True)
+    steps: int = 1
+    tool_calls: int = 0
+    tool_failures: int = 0
+    retries: int = 0
+    error: str | None = None
+    refused: bool = False
+    groundedness: float | None = None
+    latency_s: float = 0.0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
+    safety_flag: bool = False
+    success: bool = True
+    model: str = ""
     created_at: datetime = Field(default_factory=utcnow, index=True)
 
 
@@ -144,6 +171,7 @@ def record_eval(result: AggregateResult) -> int:
         verdicts_json=json.dumps([v.model_dump(mode="json") for v in result.verdicts]),
         total_cost_usd=result.total_cost_usd,
         total_latency_s=result.total_latency_s,
+        created_at=result.created_at,
     )
     with get_session() as session:
         session.add(row)
@@ -166,6 +194,58 @@ def fetch_evals(
             stmt = stmt.where(EvalRow.task_type == task_type.value)
         if judge_mode is not None:
             stmt = stmt.where(EvalRow.judge_mode == judge_mode)
+        return list(session.exec(stmt).all())
+
+
+def record_run_signal(
+    *,
+    item_id: str,
+    agent_id: str,
+    task_type: TaskType,
+    trace: ExecutionTrace,
+    created_at: datetime | None = None,
+) -> int:
+    """Persist one operational execution trace; returns the new row id."""
+    init_db()
+    row = RunSignalRow(
+        item_id=item_id,
+        agent_id=agent_id,
+        task_type=task_type.value,
+        steps=trace.steps,
+        tool_calls=trace.tool_calls,
+        tool_failures=trace.tool_failures,
+        retries=trace.retries,
+        error=trace.error,
+        refused=trace.refused,
+        groundedness=trace.groundedness,
+        latency_s=trace.latency_s,
+        prompt_tokens=trace.prompt_tokens,
+        completion_tokens=trace.completion_tokens,
+        cost_usd=trace.cost_usd,
+        safety_flag=trace.safety_flag,
+        success=trace.success,
+        model=trace.model,
+        created_at=created_at or trace.created_at,
+    )
+    with get_session() as session:
+        session.add(row)
+        session.commit()
+        session.refresh(row)
+        return row.id or -1
+
+
+def fetch_run_signals(
+    agent_id: str | None = None,
+    task_type: TaskType | None = None,
+) -> list[RunSignalRow]:
+    init_db()
+    with get_session() as session:
+        stmt = select(RunSignalRow)
+        if agent_id is not None:
+            stmt = stmt.where(RunSignalRow.agent_id == agent_id)
+        if task_type is not None:
+            stmt = stmt.where(RunSignalRow.task_type == task_type.value)
+        stmt = stmt.order_by(RunSignalRow.created_at)
         return list(session.exec(stmt).all())
 
 

@@ -45,14 +45,14 @@ def test_technical_kpis_pull_metrics_and_targets():
 def test_uptime_and_error_rate_from_run():
     rows = {r.metric: r for r in technical_kpis(_bench(), _run(count=18, errors=2))}
     # 18 completed / 20 attempted = 90% uptime, 10% error rate.
-    assert rows["Uptime (run completion)"].achieved == "90%"
-    assert rows["Error rate (failed items)"].achieved == "10%"
+    assert rows["Uptime (fleet operations)"].achieved == "90%"
+    assert rows["Error rate (fleet operations)"].achieved == "10%"
 
 
 def test_technical_kpis_degrade_without_data():
     rows = {r.metric: r for r in technical_kpis(None, None)}
     assert rows["Accuracy (judge vs human pass/fail)"].achieved.startswith("n/a")
-    assert rows["Uptime (run completion)"].achieved.startswith("n/a")
+    assert rows["Uptime (fleet operations)"].achieved.startswith("n/a")
 
 
 # --------------------------------------------------------------------------- #

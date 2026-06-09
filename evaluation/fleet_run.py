@@ -22,10 +22,11 @@ from eval_harness.config import RUNS_DIR
 from eval_harness.datasets.loaders import load_gold
 from eval_harness.fleet.configs import get_fleet
 from eval_harness.fleet.generator import generate_for_fleet, generate_output
+from eval_harness.fleet.registry import list_registered_agents, produce_item
 from eval_harness.graph import PanelJudge
 from eval_harness.runner import RunReport, run_evaluation
-from eval_harness.schemas import TaskType, TestItem
-from eval_harness.store import fetch_evals, upsert_agent
+from eval_harness.schemas import ExecutionTrace, TaskType, TestItem
+from eval_harness.store import fetch_evals, record_run_signal, upsert_agent
 
 
 def _group_by_task_type(items: list[TestItem]) -> dict[TaskType, list[TestItem]]:
@@ -72,14 +73,14 @@ def run_real_fleet_evaluation(
     existing = _existing_panel_item_ids()
 
     total = sum(
-        min(limit_per_type, len(tt_tasks)) * len(get_fleet(tt))
+        min(limit_per_type, len(tt_tasks)) * len(list_registered_agents(tt))
         for tt, tt_tasks in tasks.items()
     )
     done = 0
     skipped = 0
 
     for tt, tt_tasks in tasks.items():
-        agents = get_fleet(tt)
+        agents = list_registered_agents(tt)
         for agent in agents:
             upsert_agent(agent.profile)
 
@@ -95,10 +96,26 @@ def run_real_fleet_evaluation(
                     continue
 
                 try:
-                    produced, _stats = generate_output(agent, task)
+                    produced, trace = produce_item(agent, task)
+                    record_run_signal(
+                        item_id=item_id,
+                        agent_id=agent.agent_id,
+                        task_type=tt,
+                        trace=trace,
+                    )
                 except Exception as exc:  # noqa: BLE001 - report and continue
                     err = {"item_id": item_id, "error": f"generation failed: {exc}"}
                     report.errors.append(err)
+                    record_run_signal(
+                        item_id=item_id,
+                        agent_id=agent.agent_id,
+                        task_type=tt,
+                        trace=ExecutionTrace(
+                            model=getattr(agent.profile, "model", ""),
+                            success=False,
+                            error=str(exc),
+                        ),
+                    )
                     print(f"{prefix} ERROR {err['error']}", flush=True)
                     continue
 

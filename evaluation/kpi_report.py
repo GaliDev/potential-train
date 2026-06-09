@@ -37,7 +37,7 @@ from eval_harness.governance.autonomy import calibrate_fleet
 from eval_harness.governance.router import route_next_task
 from eval_harness.llm import _PER_1M as _MODEL_PRICES
 from eval_harness.schemas import AutonomyTier, TaskType
-from eval_harness.store import fetch_evals, list_agents
+from eval_harness.store import fetch_evals, fetch_run_signals, list_agents
 
 # Targets are decisions made before running, with a defensible basis:
 # - 0.80 pass accuracy / 0.60 kappa / 0.70 spearman are the standard bars for a
@@ -145,6 +145,25 @@ def _pick_config(bench: dict | None) -> dict | None:
 # --------------------------------------------------------------------------- #
 # Technical KPIs
 # --------------------------------------------------------------------------- #
+def _fleet_operational_kpis() -> dict[str, float | None]:
+    """Aggregate operational signals across all run_signals rows."""
+    signals = fetch_run_signals()
+    if not signals:
+        return {}
+    latencies = sorted(s.latency_s for s in signals)
+    p95_idx = int(0.95 * (len(latencies) - 1))
+    tool_rates: list[float] = []
+    for s in signals:
+        if s.tool_calls > 0:
+            tool_rates.append((s.tool_calls - s.tool_failures) / s.tool_calls)
+    return {
+        "uptime": sum(1 for s in signals if s.success) / len(signals),
+        "error_rate": sum(1 for s in signals if not s.success) / len(signals),
+        "p95_latency_s": latencies[p95_idx] if latencies else None,
+        "tool_success_rate": statistics.fmean(tool_rates) if tool_rates else None,
+    }
+
+
 def technical_kpis(bench: dict | None, run: dict | None) -> list[TechKpi]:
     m = _pick_config(bench)
 
@@ -154,9 +173,13 @@ def technical_kpis(bench: dict | None, run: dict | None) -> list[TechKpi]:
     latency = m.get("avg_latency_s") if m else None
     cost_item = m.get("cost_per_item_usd") if m else None
 
-    # Uptime / error rate come from a run report: completed vs failed items.
-    uptime = error_rate = None
-    if run is not None:
+    ops = _fleet_operational_kpis()
+    uptime = ops.get("uptime")
+    error_rate = ops.get("error_rate")
+    p95_latency = ops.get("p95_latency_s")
+    tool_success = ops.get("tool_success_rate")
+
+    if uptime is None and run is not None:
         completed = int(run.get("count", 0))
         failed = len(run.get("errors", []))
         attempted = completed + failed
@@ -175,10 +198,14 @@ def technical_kpis(bench: dict | None, run: dict | None) -> list[TechKpi]:
                 note="avg wall-clock per evaluation"),
         TechKpi("Cost / item", "report", _usd(cost_item),
                 note="avg judge cost per evaluation"),
-        TechKpi("Uptime (run completion)", f">= {TARGET_UPTIME:.0%}", _pct(uptime),
-                note="completed items / attempted items in the run"),
-        TechKpi("Error rate (failed items)", f"< {TARGET_ERROR_RATE:.0%}", _pct(error_rate),
-                note="failed items / attempted items in the run"),
+        TechKpi("Uptime (fleet operations)", f">= {TARGET_UPTIME:.0%}", _pct(uptime),
+                note="successful agent executions / total run_signals"),
+        TechKpi("Error rate (fleet operations)", f"< {TARGET_ERROR_RATE:.0%}", _pct(error_rate),
+                note="failed agent executions / total run_signals"),
+        TechKpi("P95 latency (agent execution)", f"< {TARGET_LATENCY_S:.0f} s", _sec(p95_latency),
+                note="95th percentile agent wall-clock from run_signals"),
+        TechKpi("Tool success rate", ">= 90%", _pct(tool_success),
+                note="successful tool calls / total tool calls across fleet"),
     ]
 
 

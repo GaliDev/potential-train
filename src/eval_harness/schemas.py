@@ -115,3 +115,33 @@ class AgentProfile(BaseModel):
     model: str
     prompt_variant: str = "default"
     description: str = ""
+
+
+class ExecutionTrace(BaseModel):
+    """Operational telemetry from one agent execution (distinct from judge quality)."""
+
+    steps: int = 1
+    tool_calls: int = 0
+    tool_failures: int = 0
+    retries: int = 0
+    error: str | None = None
+    refused: bool = False
+    groundedness: float | None = None
+    latency_s: float = 0.0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
+    safety_flag: bool = False
+    success: bool = True
+    model: str = ""
+    created_at: datetime = Field(default_factory=utcnow)
+
+    @property
+    def tool_success_rate(self) -> float | None:
+        if self.tool_calls == 0:
+            return None
+        return (self.tool_calls - self.tool_failures) / self.tool_calls
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens

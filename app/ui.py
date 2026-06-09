@@ -24,9 +24,11 @@ if str(_SRC) not in sys.path:
 
 from eval_harness.demo_seed import seed_demo_data  # noqa: E402
 from eval_harness.governance import autonomy, policy, reviews, router  # noqa: E402
+from eval_harness.governance.drift import scan_fleet_drift  # noqa: E402
 from eval_harness.governance.profiles import compute_all_performance  # noqa: E402
 from eval_harness.schemas import TaskType  # noqa: E402
-from eval_harness.store import fetch_audit, list_agents  # noqa: E402
+from eval_harness.simulate_runtime import DriftScenario, simulate_runtime  # noqa: E402
+from eval_harness.store import fetch_audit, fetch_run_signals, list_agents  # noqa: E402
 
 st.set_page_config(page_title="Agent Workforce Governance", layout="wide")
 
@@ -53,6 +55,15 @@ st.sidebar.markdown("---")
 if st.sidebar.button("Seed demo data"):
     count = seed_demo_data()
     st.sidebar.success(f"Seeded {count} synthetic evaluations.")
+if st.sidebar.button("Simulate runtime (30d)"):
+    count = simulate_runtime(
+        n_per_agent=30,
+        scenarios=[
+            DriftScenario(agent_id="rag_weak", safety_incident=True),
+            DriftScenario(agent_id="sum_weak", latency_multiplier=3.0),
+        ],
+    )
+    st.sidebar.success(f"Simulated {count} eval + signal pairs.")
 
 has_data = bool(compute_all_performance(task_type))
 if not has_data:
@@ -66,7 +77,14 @@ st.caption(
 )
 
 tabs = st.tabs(
-    ["Fleet leaderboard", "Autonomy tiers", "Task routing", "Performance reviews", "Governance & audit"]
+    [
+        "Fleet leaderboard",
+        "Operations",
+        "Autonomy tiers",
+        "Task routing",
+        "Performance reviews",
+        "Governance & audit",
+    ]
 )
 
 # --- Fleet leaderboard ---------------------------------------------------
@@ -88,8 +106,53 @@ with tabs[0]:
     else:
         st.write("No data.")
 
-# --- Autonomy tiers ------------------------------------------------------
+# --- Operations ----------------------------------------------------------
 with tabs[1]:
+    st.subheader("Operational runtime signals")
+    profiles = compute_all_performance(task_type)
+    if profiles:
+        ops_cols = [
+            "agent_id", "n_signals", "uptime", "error_rate", "p95_latency_s",
+            "tool_success_rate", "retry_rate", "refusal_rate",
+            "avg_groundedness", "avg_tokens", "operational_drift",
+        ]
+        ops_df = pd.DataFrame([p.to_dict() for p in profiles])[ops_cols]
+        st.dataframe(ops_df.sort_values("error_rate"), use_container_width=True, hide_index=True)
+        st.line_chart(
+            ops_df.set_index("agent_id")[["uptime", "error_rate"]],
+        )
+    else:
+        st.write("No operational data.")
+
+    signals = fetch_run_signals()
+    if signals:
+        sig_df = pd.DataFrame([
+            {
+                "ts": s.created_at.isoformat(),
+                "agent_id": s.agent_id,
+                "success": s.success,
+                "latency_s": s.latency_s,
+                "tool_calls": s.tool_calls,
+                "retries": s.retries,
+            }
+            for s in signals
+        ])
+        st.caption("Recent execution signals")
+        st.dataframe(sig_df.tail(50), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.subheader("Drift & alerts")
+    alerts = scan_fleet_drift(task_type, audit=False)
+    if alerts:
+        st.dataframe(
+            pd.DataFrame([a.to_dict() for a in alerts]),
+            use_container_width=True, hide_index=True,
+        )
+    else:
+        st.write("No drift detected.")
+
+# --- Autonomy tiers ------------------------------------------------------
+with tabs[2]:
     st.subheader("How much autonomy has each agent earned?")
     decisions = autonomy.calibrate_fleet(task_type, audit=False)
     if decisions:
@@ -108,7 +171,7 @@ with tabs[1]:
         st.write("No data.")
 
 # --- Task routing --------------------------------------------------------
-with tabs[2]:
+with tabs[3]:
     st.subheader("Which agent should get the next task?")
     route_tt = task_type or TaskType.RAG_QA
     st.write(f"Routing for task type: **{route_tt.value}**")
@@ -125,7 +188,7 @@ with tabs[2]:
         )
 
 # --- Performance reviews -------------------------------------------------
-with tabs[3]:
+with tabs[4]:
     st.subheader("Agent performance reviews")
     agents = list_agents(task_type)
     if agents:
@@ -143,7 +206,7 @@ with tabs[3]:
         st.write("No agents registered.")
 
 # --- Governance & audit --------------------------------------------------
-with tabs[4]:
+with tabs[5]:
     st.subheader("Policy check")
     agents = list_agents(task_type)
     if agents:
