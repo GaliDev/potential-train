@@ -30,7 +30,28 @@ from eval_harness.datasets.langfuse_loader import (
 )
 from eval_harness.graph import PanelJudge
 from eval_harness.runner import run_evaluation
-from eval_harness.schemas import Criterion, TaskType
+from eval_harness.schemas import AgentProfile, Criterion, TaskType
+from eval_harness.store import upsert_agent
+
+
+def register_discovered_agents(items: list) -> None:
+    """Register agents seen in Langfuse traces so dashboards include them.
+
+    The leaderboard and governance views iterate over the agent registry, so
+    evals for an unregistered agent_id would be invisible.
+    """
+    seen: dict[str, AgentProfile] = {}
+    for item in items:
+        if item.agent_id and item.agent_id not in seen:
+            seen[item.agent_id] = AgentProfile(
+                agent_id=item.agent_id,
+                name=item.agent_id,
+                task_type=item.task_type,
+                model="external",
+                description="Discovered from Langfuse traces",
+            )
+    for profile in seen.values():
+        upsert_agent(profile)
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,6 +109,9 @@ def main() -> None:
             prompt_preview = item.task_prompt.replace("\n", " ")[:80]
             print(f"  {item.id}  [{item.task_type.value}]  agent={item.agent_id}  {prompt_preview}")
         return
+
+    if not args.no_persist:
+        register_discovered_agents(items)
 
     judge = PanelJudge() if args.judge == "panel" else BaselineJudge()
     report = run_evaluation(items, judge, persist=not args.no_persist)
