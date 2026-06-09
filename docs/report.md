@@ -68,60 +68,82 @@ closes the loop from *measured quality* into *governed action*:
 ## 3. Proposed GenAI System Architecture
 
 **Solution concept.** A multiagent **LLM-as-judge** eval engine scores every
-agent in the fleet across five criteria and writes results to a performance
-store. A **governance layer** reads that history to make four decisions:
-routing, autonomy calibration, performance reviews, and policy enforcement.
+agent in the fleet across five criteria, while each agent execution also emits
+**operational telemetry** (latency, tokens, tool calls, retries, refusals,
+groundedness, errors, safety flags). Both streams are written to a performance
+store, and a **governance layer** reads that history to make four decisions:
+routing, autonomy calibration, performance reviews, and policy enforcement -
+now informed by both quality *and* operational reliability.
 
 **Key functionalities.**
 
 - Multiagent judge panel (correctness, faithfulness, completeness, coherence,
   safety) with a deterministic aggregator and a safety gate.
 - Judge validated against human gold labels (accuracy, Cohen's kappa, Spearman).
-- Governance: performance-aware router, autonomy tiers, automated reviews, and a
-  policy engine with an audit log.
+- Real **LangGraph runtime agents** (RAG retrieve-check-retry, summarizer
+  draft-verify-refine, translator translate-backcheck-retry) that emit genuine
+  execution traces, alongside the prompt/model fleet configs.
+- **Operational signal capture** per execution (`ExecutionTrace` -> `run_signals`
+  store): uptime, error rate, p95 latency, tool success rate, retries, refusals,
+  groundedness, token usage, and safety flags.
+- A **calibrated runtime simulator** that scales telemetry across a time window
+  with injectable drift/incident scenarios, so governance dynamics are visible
+  without large real spend.
+- Governance: performance-aware router, autonomy tiers, automated reviews, a
+  policy engine with an audit log, and **drift/incident alerting** over the
+  operational signals.
+
+LLM-backed blocks show their model in parentheses; unlabeled blocks are
+deterministic (no LLM call).
 
 ```mermaid
 flowchart TD
-    Fleet["Managed fleet: 9 agent configs x 3 task types"] --> Gen[Output generator]
+    Fleet["Managed fleet (LLM): prompt/model configs - gpt-4o + gpt-4o-mini; real LangGraph agents - gpt-4o-mini"] --> Gen[Output generator]
+    Sim["Calibrated runtime simulator (drift/incident scenarios)"] --> Store
     Gen --> Pre[Preprocessor]
+    Gen --> Trace["ExecutionTrace: latency / tokens / tools / retries / refusals / groundedness / errors"]
     subgraph eval [Eval Engine - LangGraph panel]
-      Pre --> Correct[Correctness]
-      Pre --> Faith[Faithfulness]
-      Pre --> Complete[Completeness]
-      Pre --> Coh[Coherence]
-      Pre --> Safe[Safety]
-      Correct --> Agg[Aggregator / Meta-Judge]
+      Pre --> Correct["Correctness (LLM: gpt-4o)"]
+      Pre --> Faith["Faithfulness (LLM: gpt-4o)"]
+      Pre --> Complete["Completeness (LLM: gpt-4o)"]
+      Pre --> Coh["Coherence (LLM: gpt-4o)"]
+      Pre --> Safe["Safety (LLM: gpt-4o)"]
+      Correct --> Agg["Aggregator / Meta-Judge (deterministic, no LLM)"]
       Faith --> Agg
       Complete --> Agg
       Coh --> Agg
       Safe --> Agg
     end
-    Agg --> Store[(Performance store)]
+    Agg --> Store[("Performance store (evals + run_signals)")]
+    Trace --> Store
     Gold["Human gold labels"] --> Bench["Benchmark: kappa / accuracy / Spearman / latency / cost"]
     Store --> Bench
     subgraph gov [Governance Layer]
       Store --> Router[Task Router]
       Store --> Autonomy[Autonomy Calibrator]
-      Store --> Review[Performance Reviews]
+      Store --> Review["Performance Reviews (LLM: gpt-4o-mini, optional; deterministic fallback)"]
+      Store --> Drift[Drift / Incident Alerts]
       Router --> Policy[Policy engine + audit log]
       Autonomy --> Policy
+      Drift --> Policy
     end
-    Bench --> UI["FastAPI + Streamlit"]
+    Bench --> UI["FastAPI + Streamlit (incl. Operations tab)"]
     Policy --> UI
     Review --> UI
+    Drift --> UI
 ```
 
 **Technology stack.**
 
 | Component | Technology choice | Reason |
 | --- | --- | --- |
-| Orchestration | LangGraph | Explicit fan-out/join graph for the judge panel; fine-grained control |
+| Orchestration | LangGraph | Fan-out/join graph for the judge panel; also powers the real runtime agents (retrieve/verify/retry loops) |
 | LLM | OpenAI `gpt-4o` + `gpt-4o-mini` | Strong judging quality; mini enables a cost cascade |
-| Data models | Pydantic | Structured LLM outputs and typed DTOs |
-| Performance store | SQLite via SQLModel | Zero-setup system of record for history + audit |
+| Data models | Pydantic | Structured LLM outputs and typed DTOs, incl. `ExecutionTrace` telemetry |
+| Performance store | SQLite via SQLModel | Zero-setup system of record: `evals` (quality) + `run_signals` (operations) + audit |
 | Metrics | pandas, scipy, scikit-learn | Kappa, Spearman, precision/recall |
 | API | FastAPI | Lightweight service surface |
-| Dashboard | Streamlit | Fast, demo-friendly UI |
+| Dashboard | Streamlit | Fast, demo-friendly UI with a dedicated Operations tab |
 
 ## 4. Implementation
 
@@ -129,7 +151,10 @@ flowchart TD
 
 - **Input:** `(task, agent_id, candidate_output, optional context/reference, rubric)`.
 - **Output (eval):** per-criterion scores (1-5), pass/fail, aggregate, rationale.
-- **Output (governance):** routing decision, autonomy tier, performance review.
+- **Output (operations):** per-execution `ExecutionTrace` (latency, tokens, tool
+  calls/failures, retries, refusals, groundedness, errors, safety flags).
+- **Output (governance):** routing decision, autonomy tier, performance review,
+  and drift/incident alerts.
 - **Success metric:** agreement of the judge's verdicts with human gold labels.
 - **Target:** >= 80% pass/fail accuracy and Cohen's kappa >= 0.6 (Spearman >= 0.7).
 - **Minimum viable test set:** hand-labeled RAG, summarization, and translation
@@ -144,8 +169,25 @@ flowchart TD
 3. **Application logic** - LangGraph judge panel + aggregator
    ([graph.py](../src/eval_harness/graph.py)), and the governance layer
    ([governance/](../src/eval_harness/governance)).
-4. **Testing & validation** - benchmark vs gold labels
-   ([benchmark.py](../evaluation/benchmark.py)); baseline vs panel vs cascade/jury.
+4. **Real runtime agents** - LangGraph agents that emit execution traces
+   ([agents/](../agents)), wired through a pluggable registry
+   ([registry.py](../src/eval_harness/fleet/registry.py)) and shared trace
+   helpers ([traced_agent.py](../src/eval_harness/fleet/traced_agent.py)).
+5. **Operational telemetry** - `ExecutionTrace` schema and a `run_signals` store
+   ([schemas.py](../src/eval_harness/schemas.py),
+   [store.py](../src/eval_harness/store.py)); the fleet runner persists a signal
+   per execution, including failures ([fleet_run.py](../evaluation/fleet_run.py)).
+6. **Calibrated simulator** - scales telemetry across a time window with
+   injectable drift/incident scenarios
+   ([simulate_runtime.py](../src/eval_harness/simulate_runtime.py)).
+7. **Operational governance** - profiles, router, and autonomy extended with
+   operational signals, plus a drift/alert module
+   ([profiles.py](../src/eval_harness/governance/profiles.py),
+   [drift.py](../src/eval_harness/governance/drift.py)).
+8. **Testing & validation** - benchmark vs gold labels
+   ([benchmark.py](../evaluation/benchmark.py)); baseline vs panel vs cascade/jury;
+   plus offline tests for telemetry, the simulator, runtime agents, and
+   operational governance.
 
 **Improvement levers** ([improvement.py](../src/eval_harness/improvement.py)).
 
@@ -171,6 +213,24 @@ the best cost lever: it preserves perfect pass/fail agreement while costing less
 per item than the baseline. The jury is the quality/redundancy lever, but it is
 much slower and more expensive.
 
+**Operational KPIs (from `run_signals`).** Beyond judge quality, the platform now
+tracks fleet *operations*, surfaced in the KPI report
+([kpi_report.py](../evaluation/kpi_report.py)) and the dashboard's Operations tab:
+
+| Metric | Target | Source |
+| --- | --- | --- |
+| Uptime (successful executions / total) | >= 99% | `run_signals.success` |
+| Error rate (failed executions / total) | < 5% | `run_signals.success` |
+| P95 latency (agent execution) | < 2 s | `run_signals.latency_s` |
+| Tool success rate | >= 90% | `run_signals.tool_calls` vs `tool_failures` |
+| Operational drift (recent vs older error rate) | ~0 (stable) | time-windowed `run_signals` |
+
+These signals feed governance directly: the router penalizes high error rate and
+p95 latency (and gates on tool success), the autonomy calibrator blocks agents
+with high operational error or safety flags and demotes agents showing drift, and
+the drift module raises alerts for error-rate spikes, sustained high error rate,
+groundedness drops, and safety incidents.
+
 **Challenges & solutions.**
 
 - *Trusting the judge:* solved by benchmarking against human gold labels before
@@ -181,9 +241,10 @@ much slower and more expensive.
 
 ## 5. Pitch
 
-See [pitch.md](pitch.md). Demo flow: seed/benchmark -> show fleet leaderboard ->
-autonomy tiers -> route a RAG, summarization, or translation task -> generate a
-performance review -> policy check + audit log.
+See [pitch.md](pitch.md). Demo flow: seed/benchmark or simulate runtime -> show
+fleet leaderboard -> Operations tab (uptime, error rate, p95, tool success,
+drift alerts) -> autonomy tiers -> route a RAG, summarization, or translation
+task -> generate a performance review -> policy check + audit log.
 
 ## Code repository
 
@@ -202,7 +263,16 @@ PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
 # Optional: include public translation labels from WMT
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 40
 
-# Explore the dashboard (works offline via "Seed demo data")
+# Generate timestamped operational history with drift/incident scenarios (offline)
+PYTHONPATH=src python -m eval_harness.simulate_runtime
+
+# Run the real LangGraph runtime agents over gold tasks (needs API key)
+PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
+
+# Render the Technical + Business + operational KPI report
+PYTHONPATH=src python -m evaluation.kpi_report
+
+# Explore the dashboard (works offline via "Seed demo data" / "Simulate runtime")
 PYTHONPATH=src streamlit run app/ui.py
 
 # Or run the API
