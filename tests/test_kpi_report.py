@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from eval_harness.demo_seed import seed_demo_data
 from evaluation.kpi_report import (
-    business_kpis,
+    agent_quality_kpis,
+    agent_reliability_kpis,
     generate_kpi_report,
-    technical_kpis,
+    judge_kpis,
+    platform_value_kpis,
 )
 
 
@@ -32,48 +34,42 @@ def _run(count: int = 18, errors: int = 2) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# Technical KPIs
+# Platform KPIs - judge trustworthiness & efficiency
 # --------------------------------------------------------------------------- #
-def test_technical_kpis_pull_metrics_and_targets():
-    rows = {r.metric: r for r in technical_kpis(_bench(), _run())}
+def test_judge_kpis_pull_metrics_and_targets():
+    rows = {r.metric: r for r in judge_kpis(_bench())}
     assert rows["Accuracy (judge vs human pass/fail)"].achieved == "88%"
     assert rows["Cohen's kappa (judge vs human)"].achieved == "0.710"
     assert rows["Spearman (score vs human)"].achieved == "0.740"
-    assert rows["Latency / item"].achieved == "1.40 s"
+    assert rows["Eval latency / item"].achieved == "1.40 s"
 
 
-def test_uptime_and_error_rate_from_run():
-    rows = {r.metric: r for r in technical_kpis(_bench(), _run(count=18, errors=2))}
-    # 18 completed / 20 attempted = 90% uptime, 10% error rate.
-    assert rows["Uptime (fleet operations)"].achieved == "90%"
-    assert rows["Error rate (fleet operations)"].achieved == "10%"
-
-
-def test_technical_kpis_degrade_without_data():
-    rows = {r.metric: r for r in technical_kpis(None, None)}
+def test_judge_kpis_degrade_without_data():
+    rows = {r.metric: r for r in judge_kpis(None)}
     assert rows["Accuracy (judge vs human pass/fail)"].achieved.startswith("n/a")
-    assert rows["Uptime (fleet operations)"].achieved.startswith("n/a")
+    # Judge KPIs measure the platform only - no operational/agent rows here.
+    assert "Uptime (fleet operations)" not in rows
 
 
 # --------------------------------------------------------------------------- #
-# Business KPIs
+# Platform value KPIs
 # --------------------------------------------------------------------------- #
 def test_cost_lever_reduction_computed():
-    biz = {r.metric: r for r in business_kpis(_bench(panel_cpi=0.004, cascade_cpi=0.001),
-                                              human_minutes=4, hourly_cost=40)}
+    biz = {r.metric: r for r in platform_value_kpis(_bench(panel_cpi=0.004, cascade_cpi=0.001),
+                                                    human_minutes=4, hourly_cost=40)}
     # (1 - 0.001/0.004) = 75% reduction.
     assert biz["Judge cost / item (cascade lever)"].improvement == "-75%"
 
 
 def test_cost_lever_na_without_cascade():
-    biz = {r.metric: r for r in business_kpis(_bench(cascade_cpi=None),
-                                              human_minutes=4, hourly_cost=40)}
+    biz = {r.metric: r for r in platform_value_kpis(_bench(cascade_cpi=None),
+                                                    human_minutes=4, hourly_cost=40)}
     assert biz["Judge cost / item (cascade lever)"].improvement.startswith("n/a")
 
 
-def test_business_kpis_with_seeded_store():
+def test_platform_value_with_seeded_store():
     seed_demo_data(n_per_agent=12, seed=1)
-    biz = {r.metric: r for r in business_kpis(_bench(), human_minutes=4, hourly_cost=40)}
+    biz = {r.metric: r for r in platform_value_kpis(_bench(), human_minutes=4, hourly_cost=40)}
 
     prod = biz["Evaluation throughput (productivity)"]
     assert "throughput" in prod.improvement
@@ -92,23 +88,59 @@ def test_business_kpis_with_seeded_store():
 
 def test_routing_savings_na_without_history():
     # No seed -> empty store -> routing has nothing to compare.
-    biz = {r.metric: r for r in business_kpis(None, human_minutes=4, hourly_cost=40)}
+    biz = {r.metric: r for r in platform_value_kpis(None, human_minutes=4, hourly_cost=40)}
     assert biz["Fleet inference cost / task (routing)"].improvement.startswith("n/a")
+
+
+# --------------------------------------------------------------------------- #
+# Agent KPIs - reliability (operational) & quality (per criterion)
+# --------------------------------------------------------------------------- #
+def test_agent_reliability_uptime_and_error_from_run():
+    rows = {r.metric: r for r in agent_reliability_kpis(_run(count=18, errors=2))}
+    # 18 completed / 20 attempted = 90% uptime, 10% error rate.
+    assert rows["Uptime (fleet operations)"].achieved == "90%"
+    assert rows["Error rate (fleet operations)"].achieved == "10%"
+
+
+def test_agent_reliability_degrades_without_data():
+    rows = {r.metric: r for r in agent_reliability_kpis(None)}
+    assert rows["Uptime (fleet operations)"].achieved.startswith("n/a")
+    assert rows["P95 latency (agent execution)"].achieved.startswith("n/a")
+
+
+def test_agent_quality_kpis_with_seeded_store():
+    seed_demo_data(n_per_agent=12, seed=3)
+    rows = {r.metric: r for r in agent_quality_kpis()}
+    # One row per criterion plus a fleet pass-rate row.
+    for crit in ("Correctness", "Faithfulness", "Completeness", "Coherence", "Safety"):
+        assert f"{crit} (fleet avg)" in rows
+        assert not rows[f"{crit} (fleet avg)"].achieved.startswith("n/a")
+    assert rows["Fleet pass rate"].achieved.endswith("%")
+
+
+def test_agent_quality_kpis_na_without_data():
+    rows = {r.metric: r for r in agent_quality_kpis()}
+    assert rows["Correctness (fleet avg)"].achieved.startswith("n/a")
+    assert rows["Fleet pass rate"].achieved.startswith("n/a")
 
 
 # --------------------------------------------------------------------------- #
 # End-to-end render
 # --------------------------------------------------------------------------- #
-def test_generate_report_renders_both_tables():
+def test_generate_report_renders_platform_and_agent_sections():
     seed_demo_data(n_per_agent=8, seed=2)
     md = generate_kpi_report(_bench(), _run(), human_minutes=4, hourly_cost=40)
-    assert "## Technical KPIs" in md
-    assert "## Business KPIs" in md
+    assert "## Platform KPIs" in md
+    assert "## Agent KPIs" in md
+    assert "### Judge trustworthiness & efficiency" in md
+    assert "### Output quality (per criterion)" in md
+    assert "### Runtime reliability" in md
     assert "## Assumptions" in md
     assert "Cohen's kappa" in md
 
 
 def test_generate_report_no_data_is_graceful():
     md = generate_kpi_report(None, None, human_minutes=4, hourly_cost=40)
-    assert "## Technical KPIs" in md
+    assert "## Platform KPIs" in md
+    assert "## Agent KPIs" in md
     assert "n/a (no run yet)" in md

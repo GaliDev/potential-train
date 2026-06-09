@@ -89,13 +89,18 @@ def post_policy(req: PolicyRequest) -> dict:
 
 @app.get("/kpi")
 def get_kpi(human_minutes: float = 4.0, hourly_cost: float = 40.0) -> dict:
-    """Technical + Business KPI tables from the latest run artifacts and store."""
+    """KPIs split into Platform (the judge/governance system) and Agent (the fleet)."""
     bench, run, sources = kpi_report.load_latest_sources()
-    tech = kpi_report.technical_kpis(bench, run)
-    biz = kpi_report.business_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost)
     return {
-        "technical": [t.__dict__ for t in tech],
-        "business": [b.__dict__ for b in biz],
+        "platform": {
+            "performance": [r.__dict__ for r in kpi_report.judge_kpis(bench)],
+            "value": [r.__dict__ for r in kpi_report.platform_value_kpis(
+                bench, human_minutes=human_minutes, hourly_cost=hourly_cost)],
+        },
+        "agents": {
+            "quality": [r.__dict__ for r in kpi_report.agent_quality_kpis()],
+            "reliability": [r.__dict__ for r in kpi_report.agent_reliability_kpis(run)],
+        },
         "assumptions": {"human_minutes": human_minutes, "hourly_cost": hourly_cost},
         "sources": sources,
         "markdown": kpi_report.generate_kpi_report(
