@@ -34,6 +34,7 @@ from pathlib import Path
 
 from eval_harness.config import RUNS_DIR
 from eval_harness.governance.autonomy import calibrate_fleet
+from eval_harness.governance.profiles import compute_all_performance
 from eval_harness.governance.router import route_next_task
 from eval_harness.llm import _PER_1M as _MODEL_PRICES
 from eval_harness.schemas import AutonomyTier, TaskType
@@ -49,9 +50,16 @@ TARGET_SPEARMAN = 0.70
 TARGET_LATENCY_S = 2.0
 TARGET_UPTIME = 0.99
 TARGET_ERROR_RATE = 0.05
+TARGET_TOOL_SUCCESS = 0.90
+# Agent output-quality bars on the judge's 1-5 scale.
+TARGET_CRITERION = 4.0
+TARGET_PASS_RATE = 0.70
 
 # Which judge configuration represents the production system, in preference order.
 _PROD_CONFIG_ORDER = ("panel", "jury", "baseline", "cascade")
+
+# The five quality dimensions scored by the judge panel (lowercase store keys).
+_CRITERIA = ("correctness", "faithfulness", "completeness", "coherence", "safety")
 
 
 # --------------------------------------------------------------------------- #
@@ -143,7 +151,37 @@ def _pick_config(bench: dict | None) -> dict | None:
 
 
 # --------------------------------------------------------------------------- #
-# Technical KPIs
+# PLATFORM KPIs - how good / trustworthy / valuable is the platform itself?
+# --------------------------------------------------------------------------- #
+def judge_kpis(bench: dict | None) -> list[TechKpi]:
+    """Platform performance: is the judge trustworthy, fast, and cheap?
+
+    These measure the *platform* (the LLM-as-judge), not the agents it scores -
+    agreement with human gold labels plus the judge's own latency/cost.
+    """
+    m = _pick_config(bench)
+    acc = m.get("pass_accuracy") if m else None
+    kappa = m.get("cohen_kappa") if m else None
+    spearman = m.get("spearman") if m else None
+    latency = m.get("avg_latency_s") if m else None
+    cost_item = m.get("cost_per_item_usd") if m else None
+
+    return [
+        TechKpi("Accuracy (judge vs human pass/fail)", f">= {TARGET_ACCURACY:.0%}", _pct(acc),
+                note="agreement of judge verdicts with human gold labels"),
+        TechKpi("Cohen's kappa (judge vs human)", f">= {TARGET_KAPPA:.2f}", _num(kappa, 3),
+                note="chance-corrected agreement; >=0.6 is 'substantial'"),
+        TechKpi("Spearman (score vs human)", f">= {TARGET_SPEARMAN:.2f}", _num(spearman, 3),
+                note="rank correlation on the 1-5 score"),
+        TechKpi("Eval latency / item", f"< {TARGET_LATENCY_S:.0f} s", _sec(latency),
+                note="avg judge wall-clock per evaluation"),
+        TechKpi("Eval cost / item", "report", _usd(cost_item),
+                note="avg judge cost per evaluation"),
+    ]
+
+
+# --------------------------------------------------------------------------- #
+# AGENT KPIs - what the platform measures about the managed fleet
 # --------------------------------------------------------------------------- #
 def _fleet_operational_kpis() -> dict[str, float | None]:
     """Aggregate operational signals across all run_signals rows."""
@@ -164,15 +202,12 @@ def _fleet_operational_kpis() -> dict[str, float | None]:
     }
 
 
-def technical_kpis(bench: dict | None, run: dict | None) -> list[TechKpi]:
-    m = _pick_config(bench)
+def agent_reliability_kpis(run: dict | None) -> list[TechKpi]:
+    """Agent runtime reliability from operational signals (uptime/errors/p95/tools).
 
-    acc = m.get("pass_accuracy") if m else None
-    kappa = m.get("cohen_kappa") if m else None
-    spearman = m.get("spearman") if m else None
-    latency = m.get("avg_latency_s") if m else None
-    cost_item = m.get("cost_per_item_usd") if m else None
-
+    Prefers the live run_signals telemetry; falls back to a run report's
+    completed-vs-failed counts when no signals have been recorded yet.
+    """
     ops = _fleet_operational_kpis()
     uptime = ops.get("uptime")
     error_rate = ops.get("error_rate")
@@ -188,29 +223,52 @@ def technical_kpis(bench: dict | None, run: dict | None) -> list[TechKpi]:
             error_rate = failed / attempted
 
     return [
-        TechKpi("Accuracy (judge vs human pass/fail)", f">= {TARGET_ACCURACY:.0%}", _pct(acc),
-                note="agreement of judge verdicts with human gold labels"),
-        TechKpi("Cohen's kappa (judge vs human)", f">= {TARGET_KAPPA:.2f}", _num(kappa, 3),
-                note="chance-corrected agreement; >=0.6 is 'substantial'"),
-        TechKpi("Spearman (score vs human)", f">= {TARGET_SPEARMAN:.2f}", _num(spearman, 3),
-                note="rank correlation on the 1-5 score"),
-        TechKpi("Latency / item", f"< {TARGET_LATENCY_S:.0f} s", _sec(latency),
-                note="avg wall-clock per evaluation"),
-        TechKpi("Cost / item", "report", _usd(cost_item),
-                note="avg judge cost per evaluation"),
         TechKpi("Uptime (fleet operations)", f">= {TARGET_UPTIME:.0%}", _pct(uptime),
                 note="successful agent executions / total run_signals"),
         TechKpi("Error rate (fleet operations)", f"< {TARGET_ERROR_RATE:.0%}", _pct(error_rate),
                 note="failed agent executions / total run_signals"),
         TechKpi("P95 latency (agent execution)", f"< {TARGET_LATENCY_S:.0f} s", _sec(p95_latency),
                 note="95th percentile agent wall-clock from run_signals"),
-        TechKpi("Tool success rate", ">= 90%", _pct(tool_success),
+        TechKpi("Tool success rate", f">= {TARGET_TOOL_SUCCESS:.0%}", _pct(tool_success),
                 note="successful tool calls / total tool calls across fleet"),
     ]
 
 
+def agent_quality_kpis() -> list[TechKpi]:
+    """Agent output quality: per-criterion judge scores across the fleet.
+
+    This is the substance the eval engine produces about each agent. Each row is
+    the fleet-average for one criterion, with the strong- vs weak-tier averages
+    in the note so the quality separation (and why governance blocks the weak
+    variants) is visible. Maps to the POC success metrics: correctness=accuracy,
+    faithfulness=grounding, safety=safety.
+    """
+    profiles = compute_all_performance()
+    strong = [p for p in profiles if p.agent_id.endswith("_strong")]
+    weak = [p for p in profiles if p.agent_id.endswith("_weak")]
+
+    rows: list[TechKpi] = []
+    for crit in _CRITERIA:
+        fleet_vals = [p.per_criterion_avg[crit] for p in profiles if crit in p.per_criterion_avg]
+        strong_avg = _mean([p.per_criterion_avg[crit] for p in strong if crit in p.per_criterion_avg])
+        weak_avg = _mean([p.per_criterion_avg[crit] for p in weak if crit in p.per_criterion_avg])
+        note_bits = []
+        if strong_avg is not None:
+            note_bits.append(f"strong {strong_avg:.2f}")
+        if weak_avg is not None:
+            note_bits.append(f"weak {weak_avg:.2f}")
+        note = "; ".join(note_bits) or "per-criterion panel score across the fleet"
+        rows.append(TechKpi(f"{crit.capitalize()} (fleet avg)", f">= {TARGET_CRITERION:.1f}",
+                            _num(_mean(fleet_vals), 2), note=note))
+
+    pass_rate = _mean([p.pass_rate for p in profiles]) if profiles else None
+    rows.append(TechKpi("Fleet pass rate", f">= {TARGET_PASS_RATE:.0%}", _pct(pass_rate),
+                        note=f"mean panel pass rate across {len(profiles)} agents"))
+    return rows
+
+
 # --------------------------------------------------------------------------- #
-# Business KPIs
+# PLATFORM value KPIs - the business value the platform delivers over the fleet
 # --------------------------------------------------------------------------- #
 def _cost_lever_kpi(bench: dict | None) -> BizKpi:
     configs = (bench or {}).get("configs", {})
@@ -325,7 +383,8 @@ def _revenue_kpi() -> BizKpi:
     )
 
 
-def business_kpis(bench: dict | None, *, human_minutes: float, hourly_cost: float) -> list[BizKpi]:
+def platform_value_kpis(bench: dict | None, *, human_minutes: float, hourly_cost: float) -> list[BizKpi]:
+    """Business value the platform delivers: cost lever, routing, productivity, quality."""
     return [
         _cost_lever_kpi(bench),
         _routing_savings_kpi(),
@@ -338,9 +397,28 @@ def business_kpis(bench: dict | None, *, human_minutes: float, hourly_cost: floa
 # --------------------------------------------------------------------------- #
 # Rendering
 # --------------------------------------------------------------------------- #
+def _target_table(rows: list[TechKpi]) -> list[str]:
+    lines = ["| Metric | Target | Achieved | Basis | Notes |", "| --- | --- | --- | --- | --- |"]
+    for r in rows:
+        lines.append(f"| {r.metric} | {r.target} | {r.achieved} | {r.basis} | {r.note} |")
+    return lines
+
+
+def _value_table(rows: list[BizKpi]) -> list[str]:
+    lines = ["| Metric | Baseline | After | Improvement | Basis | Notes |",
+             "| --- | --- | --- | --- | --- | --- |"]
+    for r in rows:
+        lines.append(
+            f"| {r.metric} | {r.baseline} | {r.after} | {r.improvement} | {r.basis} | {r.note} |"
+        )
+    return lines
+
+
 def _render_markdown(
-    tech: list[TechKpi],
-    biz: list[BizKpi],
+    judge: list[TechKpi],
+    value: list[BizKpi],
+    quality: list[TechKpi],
+    reliability: list[TechKpi],
     *,
     human_minutes: float,
     hourly_cost: float,
@@ -350,27 +428,34 @@ def _render_markdown(
     lines: list[str] = []
     lines.append("# KPI Report - Agent Workforce Governance")
     lines.append("")
-    lines.append(f"_Generated {stamp}. Every value is **measured** from a run/the store "
-                 "or **estimated** from a stated assumption (see Basis); `n/a` means no run "
-                 "has produced that number yet._")
+    lines.append(f"_Generated {stamp}. KPIs are split into **Platform** (how good/trustworthy/"
+                 "valuable the governance platform itself is) and **Agent** (what the platform "
+                 "measures about the managed fleet). Every value is **measured** or **estimated** "
+                 "(see Basis); `n/a` means no run has produced it yet._")
     lines.append("")
 
-    lines.append("## Technical KPIs")
+    lines.append("## Platform KPIs")
+    lines.append("_Is the platform itself good and worth it?_")
     lines.append("")
-    lines.append("| Metric | Target | Achieved | Basis | Notes |")
-    lines.append("| --- | --- | --- | --- | --- |")
-    for r in tech:
-        lines.append(f"| {r.metric} | {r.target} | {r.achieved} | {r.basis} | {r.note} |")
+    lines.append("### Judge trustworthiness & efficiency")
+    lines.append("")
+    lines.extend(_target_table(judge))
+    lines.append("")
+    lines.append("### Platform value")
+    lines.append("")
+    lines.extend(_value_table(value))
     lines.append("")
 
-    lines.append("## Business KPIs")
+    lines.append("## Agent KPIs")
+    lines.append("_What the platform measures about the managed fleet._")
     lines.append("")
-    lines.append("| Metric | Baseline | After | Improvement | Basis | Notes |")
-    lines.append("| --- | --- | --- | --- | --- | --- |")
-    for r in biz:
-        lines.append(
-            f"| {r.metric} | {r.baseline} | {r.after} | {r.improvement} | {r.basis} | {r.note} |"
-        )
+    lines.append("### Output quality (per criterion)")
+    lines.append("")
+    lines.extend(_target_table(quality))
+    lines.append("")
+    lines.append("### Runtime reliability")
+    lines.append("")
+    lines.extend(_target_table(reliability))
     lines.append("")
 
     lines.append("## Assumptions")
@@ -417,10 +502,11 @@ def generate_kpi_report(
     sources: dict[str, str] | None = None,
 ) -> str:
     """Build the full markdown KPI report from already-loaded sources."""
-    tech = technical_kpis(bench, run)
-    biz = business_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost)
     return _render_markdown(
-        tech, biz,
+        judge=judge_kpis(bench),
+        value=platform_value_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost),
+        quality=agent_quality_kpis(),
+        reliability=agent_reliability_kpis(run),
         human_minutes=human_minutes, hourly_cost=hourly_cost,
         sources=sources or {"benchmark": "none", "run": "none", "store": "in-process"},
     )

@@ -245,12 +245,22 @@ with tabs[5]:
         st.write("No audit entries yet.")
 
 # --- KPI report ----------------------------------------------------------
+def _target_df(rows):
+    return pd.DataFrame([r.__dict__ for r in rows])[["metric", "target", "achieved", "basis", "note"]]
+
+
+def _value_df(rows):
+    return pd.DataFrame([r.__dict__ for r in rows])[
+        ["metric", "baseline", "after", "improvement", "basis", "note"]
+    ]
+
+
 with tabs[6]:
-    st.subheader("Technical & Business KPIs")
+    st.subheader("Platform & Agent KPIs")
     st.caption(
-        "The assignment's Target-vs-Achieved tables, computed from the latest "
-        "benchmark/run artifacts in data/runs/ plus the governance store. Every "
-        "value is **measured** or **estimated** from the stated assumptions below."
+        "Split into **Platform** KPIs (how good/trustworthy/valuable the governance "
+        "platform itself is) and **Agent** KPIs (what the platform measures about the "
+        "managed fleet). Computed from the latest benchmark/run artifacts plus the store."
     )
 
     c1, c2 = st.columns(2)
@@ -264,29 +274,33 @@ with tabs[6]:
     )
 
     bench, run, sources = kpi_report.load_latest_sources()
-    if bench is None and run is None:
+    if bench is None:
         st.info(
-            "No benchmark or run artifacts found in data/runs/. Store-derived "
-            "business and operational KPIs still render; run `evaluation.benchmark` / "
-            "`evaluation.fleet_run` to populate the judge-agreement rows."
+            "No benchmark artifact found in data/runs/. Agent KPIs (quality + reliability) "
+            "and store-derived platform value still render; run `evaluation.benchmark` to "
+            "populate the judge-trustworthiness rows."
         )
 
-    tech = kpi_report.technical_kpis(bench, run)
-    biz = kpi_report.business_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost)
-
-    st.markdown("#### Technical KPIs")
+    st.markdown("### Platform KPIs")
+    st.caption("Is the platform itself good and worth it?")
+    st.markdown("**Judge trustworthiness & efficiency**")
+    st.dataframe(_target_df(kpi_report.judge_kpis(bench)),
+                 use_container_width=True, hide_index=True)
+    st.markdown("**Platform value**")
     st.dataframe(
-        pd.DataFrame([t.__dict__ for t in tech])[["metric", "target", "achieved", "basis", "note"]],
+        _value_df(kpi_report.platform_value_kpis(
+            bench, human_minutes=human_minutes, hourly_cost=hourly_cost)),
         use_container_width=True, hide_index=True,
     )
 
-    st.markdown("#### Business KPIs")
-    st.dataframe(
-        pd.DataFrame([b.__dict__ for b in biz])[
-            ["metric", "baseline", "after", "improvement", "basis", "note"]
-        ],
-        use_container_width=True, hide_index=True,
-    )
+    st.markdown("### Agent KPIs")
+    st.caption("What the platform measures about the managed fleet.")
+    st.markdown("**Output quality (per criterion)**")
+    st.dataframe(_target_df(kpi_report.agent_quality_kpis()),
+                 use_container_width=True, hide_index=True)
+    st.markdown("**Runtime reliability**")
+    st.dataframe(_target_df(kpi_report.agent_reliability_kpis(run)),
+                 use_container_width=True, hide_index=True)
 
     report_md = kpi_report.generate_kpi_report(
         bench, run, human_minutes=human_minutes, hourly_cost=hourly_cost, sources=sources,
