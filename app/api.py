@@ -11,6 +11,8 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from evaluation import kpi_report
+
 from eval_harness.governance import autonomy, policy, reviews, router
 from eval_harness.governance.profiles import compute_all_performance
 from eval_harness.schemas import TaskType
@@ -83,6 +85,23 @@ def post_policy(req: PolicyRequest) -> dict:
     if decision is None:
         raise HTTPException(status_code=404, detail=f"No history for agent {req.agent_id}")
     return decision.to_dict()
+
+
+@app.get("/kpi")
+def get_kpi(human_minutes: float = 4.0, hourly_cost: float = 40.0) -> dict:
+    """Technical + Business KPI tables from the latest run artifacts and store."""
+    bench, run, sources = kpi_report.load_latest_sources()
+    tech = kpi_report.technical_kpis(bench, run)
+    biz = kpi_report.business_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost)
+    return {
+        "technical": [t.__dict__ for t in tech],
+        "business": [b.__dict__ for b in biz],
+        "assumptions": {"human_minutes": human_minutes, "hourly_cost": hourly_cost},
+        "sources": sources,
+        "markdown": kpi_report.generate_kpi_report(
+            bench, run, human_minutes=human_minutes, hourly_cost=hourly_cost, sources=sources,
+        ),
+    }
 
 
 @app.get("/audit")
