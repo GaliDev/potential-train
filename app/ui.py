@@ -17,11 +17,15 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# Make the src/ package importable when launched via `streamlit run`.
-_SRC = Path(__file__).resolve().parents[1] / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+# Make the src/ package and the repo root importable when launched via
+# `streamlit run` (the script dir, app/, is sys.path[0] by default).
+_ROOT = Path(__file__).resolve().parents[1]
+_SRC = _ROOT / "src"
+for _p in (_SRC, _ROOT):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
+from evaluation import kpi_report  # noqa: E402
 from eval_harness.demo_seed import seed_demo_data  # noqa: E402
 from eval_harness.governance import autonomy, policy, reviews, router  # noqa: E402
 from eval_harness.governance.drift import scan_fleet_drift  # noqa: E402
@@ -84,6 +88,7 @@ tabs = st.tabs(
         "Task routing",
         "Performance reviews",
         "Governance & audit",
+        "KPI report",
     ]
 )
 
@@ -238,3 +243,59 @@ with tabs[5]:
         )
     else:
         st.write("No audit entries yet.")
+
+# --- KPI report ----------------------------------------------------------
+with tabs[6]:
+    st.subheader("Technical & Business KPIs")
+    st.caption(
+        "The assignment's Target-vs-Achieved tables, computed from the latest "
+        "benchmark/run artifacts in data/runs/ plus the governance store. Every "
+        "value is **measured** or **estimated** from the stated assumptions below."
+    )
+
+    c1, c2 = st.columns(2)
+    human_minutes = c1.number_input(
+        "Human minutes / item (productivity baseline)",
+        min_value=0.5, max_value=60.0, value=4.0, step=0.5,
+    )
+    hourly_cost = c2.number_input(
+        "Loaded labeling cost ($/hr)",
+        min_value=1.0, max_value=500.0, value=40.0, step=5.0,
+    )
+
+    bench, run, sources = kpi_report.load_latest_sources()
+    if bench is None and run is None:
+        st.info(
+            "No benchmark or run artifacts found in data/runs/. Store-derived "
+            "business and operational KPIs still render; run `evaluation.benchmark` / "
+            "`evaluation.fleet_run` to populate the judge-agreement rows."
+        )
+
+    tech = kpi_report.technical_kpis(bench, run)
+    biz = kpi_report.business_kpis(bench, human_minutes=human_minutes, hourly_cost=hourly_cost)
+
+    st.markdown("#### Technical KPIs")
+    st.dataframe(
+        pd.DataFrame([t.__dict__ for t in tech])[["metric", "target", "achieved", "basis", "note"]],
+        use_container_width=True, hide_index=True,
+    )
+
+    st.markdown("#### Business KPIs")
+    st.dataframe(
+        pd.DataFrame([b.__dict__ for b in biz])[
+            ["metric", "baseline", "after", "improvement", "basis", "note"]
+        ],
+        use_container_width=True, hide_index=True,
+    )
+
+    report_md = kpi_report.generate_kpi_report(
+        bench, run, human_minutes=human_minutes, hourly_cost=hourly_cost, sources=sources,
+    )
+    st.download_button(
+        "Download report (markdown)", report_md,
+        file_name="kpi_report.md", mime="text/markdown",
+    )
+
+    with st.expander("Data sources"):
+        for label, value in sources.items():
+            st.write(f"- **{label}**: {value}")

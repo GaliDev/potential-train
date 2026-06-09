@@ -389,6 +389,25 @@ def _render_markdown(
     return "\n".join(lines)
 
 
+def load_latest_sources() -> tuple[dict | None, dict | None, dict[str, str]]:
+    """Locate and load the newest benchmark + run JSON in RUNS_DIR.
+
+    Returns ``(bench, run, sources)`` where ``sources`` documents what was
+    found. Shared by the CLI and the dashboard/API so they all read the same
+    artifacts and report provenance the same way.
+    """
+    bench_path = _latest("benchmark_*.json")
+    run_path = _latest("run_*.json")
+    bench = _load_json(bench_path)
+    run = _load_json(run_path)
+    sources = {
+        "benchmark": str(bench_path) if bench else "none found (run evaluation.benchmark)",
+        "run": str(run_path) if run else "none found (run evaluation.fleet_run / runner)",
+        "store": "data/governance.db (governance + productivity + quality)",
+    }
+    return bench, run, sources
+
+
 def generate_kpi_report(
     bench: dict | None,
     run: dict | None,
@@ -424,16 +443,18 @@ def main() -> None:
                         help="Where to write the markdown report.")
     args = parser.parse_args()
 
-    bench_path = args.benchmark or _latest("benchmark_*.json")
-    run_path = args.run or _latest("run_*.json")
-    bench = _load_json(bench_path)
-    run = _load_json(run_path)
-
-    sources = {
-        "benchmark": str(bench_path) if bench else "none found (run evaluation.benchmark)",
-        "run": str(run_path) if run else "none found (run evaluation.fleet_run / runner)",
-        "store": "data/governance.db (governance + productivity + quality)",
-    }
+    if args.benchmark is None and args.run is None:
+        bench, run, sources = load_latest_sources()
+    else:
+        bench_path = args.benchmark or _latest("benchmark_*.json")
+        run_path = args.run or _latest("run_*.json")
+        bench = _load_json(bench_path)
+        run = _load_json(run_path)
+        sources = {
+            "benchmark": str(bench_path) if bench else "none found (run evaluation.benchmark)",
+            "run": str(run_path) if run else "none found (run evaluation.fleet_run / runner)",
+            "store": "data/governance.db (governance + productivity + quality)",
+        }
 
     report = generate_kpi_report(
         bench, run,
