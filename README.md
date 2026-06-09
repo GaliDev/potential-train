@@ -78,6 +78,10 @@ PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 4
 # Populate the dashboard with real fleet outputs + persisted panel judgments
 PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 
+# Judge live Langfuse traces and push the 5 criterion scores back to Langfuse
+# (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env)
+PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
+
 # Dashboard (works offline via the "Seed demo data" button)
 PYTHONPATH=src streamlit run app/ui.py
 
