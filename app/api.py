@@ -9,16 +9,26 @@ policy). Run with:
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from evaluation import kpi_report
 
-from eval_harness.governance import autonomy, policy, reviews, router
+from eval_harness.governance import autonomy, engine, policy, reviews, router
+from eval_harness.governance.policy import TaskRisk
 from eval_harness.governance.profiles import compute_all_performance
 from eval_harness.schemas import TaskType
 from eval_harness.store import fetch_audit, list_agents
 
 app = FastAPI(title="Agent Workforce Governance", version="0.1.0")
+
+# Allow the static console (opened from file:// or a dev server) to call the API.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def _parse_task_type(value: str | None) -> TaskType | None:
@@ -48,6 +58,50 @@ def get_performance(task_type: str | None = None) -> list[dict]:
 @app.get("/autonomy")
 def get_autonomy(task_type: str | None = None) -> list[dict]:
     return [d.to_dict() for d in autonomy.calibrate_fleet(_parse_task_type(task_type), audit=False)]
+
+
+def _parse_task_risk(value: str) -> TaskRisk:
+    try:
+        return TaskRisk(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Unknown task_risk: {value}") from exc
+
+
+def _agent_task_type(agent_id: str) -> TaskType | None:
+    for a in list_agents():
+        if a.agent_id == agent_id:
+            return a.task_type
+    return None
+
+
+@app.get("/decision/{agent_id}")
+def get_decision(
+    agent_id: str, task_type: str | None = None, task_risk: str = "low"
+) -> dict:
+    """The fully resolved governance decision for one agent.
+
+    This is what the console's decision spotlight renders: tier, verdict,
+    confidence, precedence chain, drift alerts, and rationale. If task_type is
+    omitted it is taken from the agent's registered profile.
+    """
+    tt = _parse_task_type(task_type) or _agent_task_type(agent_id)
+    if tt is None:
+        raise HTTPException(status_code=404, detail=f"Unknown agent: {agent_id}")
+    return engine.decide_for_agent(
+        agent_id, tt, _parse_task_risk(task_risk), audit=False
+    ).to_dict()
+
+
+@app.get("/decisions")
+def get_decisions(task_type: str | None = None, task_risk: str = "low") -> list[dict]:
+    """Resolved decisions for the whole fleet - drives the fleet table."""
+    risk = _parse_task_risk(task_risk)
+    profiles = compute_all_performance(_parse_task_type(task_type))
+    out = []
+    for p in profiles:
+        tt = TaskType(p.task_type)
+        out.append(engine.decide_for_agent(p.agent_id, tt, risk, audit=False).to_dict())
+    return out
 
 
 @app.post("/route")
