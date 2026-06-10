@@ -19,16 +19,24 @@ JSON_FORMAT_INSTRUCTIONS = (
 )
 
 
-def system_prompt(criterion: Criterion, suffix: str = "") -> str:
+def criterion_brief(criterion: Criterion) -> str:
+    """The judge instruction without output-format directions.
+
+    Used directly for providers with native structured output (Claude);
+    `system_prompt` adds the strict-JSON instructions for everyone else.
+    """
     return (
         f"You are an expert evaluator assessing ONE quality dimension of an AI "
         f"assistant's response.\n\n{CRITERION_GUIDES[criterion]}\n\n"
         f"Score only this dimension on an integer scale from {MIN_SCORE} (poor) to "
         f"{MAX_SCORE} (excellent). Set passed=true only if the dimension is "
         f"acceptable (score >= {PASS_THRESHOLD}). Give a brief rationale and up to "
-        f"three short supporting quotes in evidence.\n\n"
-        f"{JSON_FORMAT_INSTRUCTIONS}{suffix}"
+        f"three short supporting quotes in evidence."
     )
+
+
+def system_prompt(criterion: Criterion, suffix: str = "") -> str:
+    return f"{criterion_brief(criterion)}\n\n{JSON_FORMAT_INSTRUCTIONS}{suffix}"
 
 
 def user_prompt(item: TestItem) -> str:

@@ -34,6 +34,10 @@ td.best { background: #e7f6ec; font-weight: 600; }
         padding: .7rem 1rem; font-size: .9rem; margin-top: 1rem; }
 dl.metrics dt { font-weight: 600; margin-top: .8rem; }
 dl.metrics dd { margin: .15rem 0 0 0; color: #444; }
+.winner-banner { background: #e7f6ec; border: 1px solid #b7e0c3; border-radius: 8px;
+                 padding: .9rem 1.2rem; margin-top: 1rem; font-size: 1.05rem; }
+.winner-banner b { font-size: 1.15rem; }
+td.win { background: #e7f6ec; font-weight: 600; }
 .target-met { color: #15803d; font-weight: 600; } .target-miss { color: #b91c1c; }
 footer { margin-top: 2.5rem; color: #888; font-size: .8rem; }
 """
@@ -111,16 +115,49 @@ def render_report(payload: dict) -> str:
             f"(accuracy {_fmt(acc, '{:.0%}')}, κ {_fmt(kappa, '{:.3f}')})</li>"
         )
 
+    winners = payload.get("winners") or {}
+    winners_html = ""
+    overall = winners.get("overall")
+    if overall:
+        winners_html += (
+            f"<div class='winner-banner'>🏆 Best judge overall: "
+            f"<b>{e(overall['display_name'])}</b> — ranked by Cohen's κ, then "
+            f"Spearman ρ, then MAE, then pass accuracy.</div>"
+        )
+    per_crit_winners = winners.get("per_criterion") or {}
+    if per_crit_winners:
+        winner_rows = []
+        for crit, w in per_crit_winners.items():
+            winner_rows.append(
+                f"<tr><td><b>{e(crit)}</b></td><td class='win'>{e(w['display_name'])}</td>"
+                f"<td class='num'>{_fmt(w.get('spearman'), '{:.3f}')}</td>"
+                f"<td class='num'>{_fmt(w.get('mae'), '{:.3f}')}</td>"
+                f"<td class='num'>{_fmt(w.get('pass_accuracy'), '{:.0%}')}</td></tr>"
+            )
+        winners_html += (
+            "<h2>🏆 Best judge per criterion (recommended mixed panel)</h2>"
+            "<table><tr><th>Criterion</th><th>Best judge</th><th>Spearman ρ</th>"
+            "<th>MAE</th><th>Pass acc</th></tr>"
+            + "".join(winner_rows)
+            + "</table>"
+            "<p class='meta'>Per criterion: how well that single dimension's 1–5 score "
+            "tracks the human gold score (Spearman ρ, then MAE, then pass accuracy as "
+            "tie-breakers). Use this table to assemble a mixed panel — the best LLM per "
+            "criterion.</p>"
+        )
+
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     task_mix = ", ".join(f"{k}: {v}" for k, v in payload["task_mix"].items())
 
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<title>HF LLM-as-Judge Benchmark</title><style>{_CSS}</style></head>
+<title>LLM-as-Judge Benchmark</title><style>{_CSS}</style></head>
 <body>
-<h1>HF LLM-as-Judge Benchmark</h1>
+<h1>LLM-as-Judge Benchmark</h1>
 <p class="meta">Generated {generated} · {payload['n_items']} gold items ({task_mix})
 · judged on 5 criteria: correctness, faithfulness, completeness, coherence, safety</p>
+
+{winners_html}
 
 <h2>Ranking — agreement with human gold labels</h2>
 <table>

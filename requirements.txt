@@ -30,3 +30,6 @@ datasets>=2.20.0
 
 # Dev / test
 pytest>=8.2.0
+
+# Claude judge (hf_judges benchmark)
+anthropic>=0.69.0

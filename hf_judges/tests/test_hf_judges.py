@@ -99,6 +99,101 @@ def test_user_prompt_contains_item_fields():
     assert "Basic arithmetic." in u
 
 
+# --- per-criterion stats and winners ----------------------------------------
+
+
+def make_row(key: str, kappa, spearman, mae, per_criterion: dict) -> dict:
+    return {
+        "key": key,
+        "display_name": key,
+        "metrics": {
+            "n": 10,
+            "cohen_kappa": kappa,
+            "spearman": spearman,
+            "score_mae": mae,
+            "pass_accuracy": 0.9,
+        },
+        "per_criterion": per_criterion,
+    }
+
+
+def crit_stats(spearman, mae=0.5, pass_accuracy=0.9) -> dict:
+    return {"spearman": spearman, "mae": mae, "pass_accuracy": pass_accuracy, "n": 10}
+
+
+def test_pick_overall_winner_prefers_kappa_then_spearman():
+    from hf_judges.run_benchmark import pick_overall_winner
+
+    rows = [
+        make_row("a", kappa=0.8, spearman=0.99, mae=0.2, per_criterion={}),
+        make_row("b", kappa=0.9, spearman=0.50, mae=0.4, per_criterion={}),
+    ]
+    assert pick_overall_winner(rows)["key"] == "b"  # kappa wins first
+    rows[0]["metrics"]["cohen_kappa"] = 0.9
+    assert pick_overall_winner(rows)["key"] == "a"  # tie -> spearman decides
+
+
+def test_pick_overall_winner_handles_none_metrics():
+    from hf_judges.run_benchmark import pick_overall_winner
+
+    rows = [
+        make_row("broken", kappa=None, spearman=None, mae=None, per_criterion={}),
+        make_row("ok", kappa=0.5, spearman=0.5, mae=0.5, per_criterion={}),
+    ]
+    assert pick_overall_winner(rows)["key"] == "ok"
+
+
+def test_pick_criterion_winners_selects_best_per_criterion():
+    from hf_judges.run_benchmark import pick_criterion_winners
+
+    rows = [
+        make_row(
+            "a", 0.5, 0.5, 0.5,
+            per_criterion={
+                "correctness": crit_stats(spearman=0.9),
+                "safety": crit_stats(spearman=0.2),
+            },
+        ),
+        make_row(
+            "b", 0.5, 0.5, 0.5,
+            per_criterion={
+                "correctness": crit_stats(spearman=0.7),
+                "safety": crit_stats(spearman=0.8),
+            },
+        ),
+    ]
+    winners = pick_criterion_winners(rows)
+    assert winners["correctness"]["key"] == "a"
+    assert winners["safety"]["key"] == "b"
+
+
+def test_per_criterion_stats_computes_against_gold():
+    from hf_judges.run_benchmark import per_criterion_stats
+    from eval_harness.schemas import AggregateResult, JudgeVerdict
+
+    items = [
+        TestItem(id=f"g{i}", task_type=TaskType.RAG_QA, task_prompt="q",
+                 candidate_output="a", gold_score=float(s), gold_pass=s >= 4)
+        for i, s in enumerate([1, 3, 5])
+    ]
+    results = []
+    for item in items:
+        score = int(item.gold_score)  # judge agrees perfectly
+        verdicts = [
+            JudgeVerdict(criterion=c, score=score, passed=score >= 4, rationale="r")
+            for c in Criterion
+        ]
+        results.append(AggregateResult(
+            item_id=item.id, task_type=item.task_type, verdicts=verdicts,
+            aggregate_score=float(score), overall_pass=score >= 4,
+        ))
+    stats = per_criterion_stats(results, items)
+    assert stats["correctness"]["n"] == 3
+    assert stats["correctness"]["spearman"] == 1.0
+    assert stats["correctness"]["mae"] == 0.0
+    assert stats["correctness"]["pass_accuracy"] == 1.0
+
+
 # --- report ----------------------------------------------------------------
 
 
@@ -134,8 +229,31 @@ def test_render_report_smoke():
                 "error_detail": [],
             }
         ],
+        "winners": {
+            "overall": {"key": "qwen3-8b", "display_name": "Qwen3 8B"},
+            "per_criterion": {
+                "correctness": {
+                    "key": "qwen3-8b", "display_name": "Qwen3 8B",
+                    "spearman": 0.7, "mae": 0.6, "pass_accuracy": 0.83, "n": 6,
+                },
+            },
+        },
     }
     html = render_report(payload)
     assert "Qwen3 8B" in html
     assert "meets" in html  # target bar evaluation
+    assert "Best judge overall" in html
+    assert "Best judge per criterion" in html
     assert "<table>" in html
+
+
+def test_render_report_without_winners_section():
+    payload = {
+        "generated_at": "2026-06-10T00:00:00Z",
+        "n_items": 0,
+        "task_mix": {},
+        "criteria": [c.value for c in Criterion],
+        "models": [],
+    }
+    html = render_report(payload)
+    assert "Best judge overall" not in html

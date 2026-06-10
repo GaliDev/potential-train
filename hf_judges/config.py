@@ -20,17 +20,21 @@ RESULTS_DIR = Path(__file__).resolve().parent / "results"
 load_dotenv(PROJECT_ROOT / ".env")
 
 ROUTER_BASE_URL = "https://router.huggingface.co/v1"
+XAI_BASE_URL = "https://api.x.ai/v1"
 
 
 @dataclass(frozen=True)
 class JudgeModelSpec:
     key: str  # short name used on the CLI and in reports
-    model_id: str  # HF hub id, as accepted by the router
+    model_id: str  # model id as accepted by the provider's API
     display_name: str
-    tier: str  # small / mid / large (within this benchmark)
+    tier: str  # small / mid / frontier (within this benchmark)
     license: str
-    # Rough USD per 1M tokens (input, output) across serverless providers.
-    # Indicative only - used to estimate run cost in the report.
+    # Which API serves this judge: "hf-router" (OpenAI protocol),
+    # "xai" (OpenAI protocol), or "anthropic" (official Anthropic SDK).
+    provider: str = "hf-router"
+    # Rough USD per 1M tokens (input, output). Indicative only - used to
+    # estimate run cost in the report.
     est_price_per_1m: tuple[float, float] = (0.05, 0.10)
     # Appended to the system prompt; Qwen3 hybrid models use "/no_think" to
     # disable thinking mode so we get the JSON verdict directly.
@@ -64,6 +68,24 @@ MODELS: dict[str, JudgeModelSpec] = {
         est_price_per_1m=(0.08, 0.16),
         prompt_suffix="\n/no_think",
     ),
+    "claude": JudgeModelSpec(
+        key="claude",
+        model_id="claude-opus-4-8",
+        display_name="Claude Opus 4.8",
+        tier="frontier",
+        license="proprietary API",
+        provider="anthropic",
+        est_price_per_1m=(5.00, 25.00),
+    ),
+    "grok": JudgeModelSpec(
+        key="grok",
+        model_id="grok-4",
+        display_name="Grok 4",
+        tier="frontier",
+        license="proprietary API",
+        provider="xai",
+        est_price_per_1m=(3.00, 15.00),
+    ),
 }
 
 
@@ -75,3 +97,23 @@ def hf_token() -> str:
             "(get one at https://huggingface.co/settings/tokens)."
         )
     return token
+
+
+def xai_api_key() -> str:
+    key = os.getenv("XAI_API_KEY", "")
+    if not key:
+        raise RuntimeError(
+            "XAI_API_KEY is not set. Add your xAI API key to .env "
+            "(get one at https://console.x.ai)."
+        )
+    return key
+
+
+def anthropic_api_key() -> str:
+    key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not key:
+        raise RuntimeError(
+            "ANTHROPIC_API_KEY is not set. Add your Anthropic API key to .env "
+            "(get one at https://platform.claude.com)."
+        )
+    return key

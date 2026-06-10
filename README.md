@@ -82,6 +82,10 @@ PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 # (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env)
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
 
+# Benchmark candidate judge LLMs (HF open models + Claude + Grok) against the
+# gold set and pick the best judge overall and per criterion (see hf_judges/README.md)
+PYTHONPATH=src python -m hf_judges.run_benchmark
+
 # Dashboard (works offline via the "Seed demo data" button)
 PYTHONPATH=src streamlit run app/ui.py
 
