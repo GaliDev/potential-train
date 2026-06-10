@@ -94,20 +94,32 @@ def _safe_spearman(pred: list[float], gold: list[float]) -> float | None:
     return round(float(rho), 4)
 
 
+def _safe_kappa(pred: list[int], gold: list[int]) -> float | None:
+    if not pred or len(set(pred)) < 2 or len(set(gold)) < 2:
+        return None
+    from sklearn.metrics import cohen_kappa_score
+
+    return round(float(cohen_kappa_score(gold, pred)), 4)
+
+
 def per_criterion_stats(results, items: list[TestItem]) -> dict[str, dict]:
     """Per-criterion agreement with the (item-level) human gold labels.
 
     The gold set carries one human score per item, so a criterion's quality is
     measured by how well that single dimension tracks the human's overall
-    judgment: Spearman + MAE of the criterion score vs gold_score, and
-    accuracy of the criterion's pass flag vs gold_pass.
+    judgment: pass accuracy / Cohen's kappa of the criterion's pass flag vs
+    gold_pass, Spearman + MAE of the criterion score vs gold_score, plus the
+    criterion's own latency and cost telemetry.
     """
     gold = {it.id: it for it in items}
     out: dict[str, dict] = {}
     for criterion in CRITERIA:
         pred_scores: list[float] = []
         gold_scores: list[float] = []
-        pass_hits: list[int] = []
+        pred_pass: list[int] = []
+        gold_pass: list[int] = []
+        latencies: list[float] = []
+        total_cost = 0.0
         for result in results:
             g = gold.get(result.item_id)
             verdict = next(
@@ -115,11 +127,15 @@ def per_criterion_stats(results, items: list[TestItem]) -> dict[str, dict]:
             )
             if g is None or verdict is None:
                 continue
+            if verdict.latency_s is not None:
+                latencies.append(verdict.latency_s)
+            total_cost += verdict.cost_usd or 0.0
             if g.gold_score is not None:
                 pred_scores.append(float(verdict.score))
                 gold_scores.append(float(g.gold_score))
             if g.gold_pass is not None:
-                pass_hits.append(int(verdict.passed == g.gold_pass))
+                pred_pass.append(int(verdict.passed))
+                gold_pass.append(int(g.gold_pass))
         mae = (
             round(
                 sum(abs(p - g) for p, g in zip(pred_scores, gold_scores))
@@ -129,14 +145,100 @@ def per_criterion_stats(results, items: list[TestItem]) -> dict[str, dict]:
             if pred_scores
             else None
         )
+        pass_acc = (
+            round(sum(int(p == g) for p, g in zip(pred_pass, gold_pass)) / len(pred_pass), 4)
+            if pred_pass
+            else None
+        )
         out[criterion] = {
             "n": len(pred_scores),
+            "pass_accuracy": pass_acc,
+            "cohen_kappa": _safe_kappa(pred_pass, gold_pass),
             "spearman": _safe_spearman(pred_scores, gold_scores),
             "mae": mae,
-            "pass_accuracy": round(sum(pass_hits) / len(pass_hits), 4) if pass_hits else None,
             "mean_score": round(sum(pred_scores) / len(pred_scores), 3) if pred_scores else None,
+            "avg_latency_s": round(sum(latencies) / len(latencies), 4) if latencies else None,
+            "total_cost_usd": round(total_cost, 6),
         }
     return out
+
+
+# Weighting for the recommendation: quality dominates; latency and cost act
+# as real-world tie-breakers. Each part is normalized to 0..1 across models.
+# At 80/10/10 the latency+cost advantage can swing at most 0.20, so a judge
+# must be within ~0.25 quality of the leader before speed/price can flip the
+# recommendation - cheapness decides near-ties, never crowns a bad judge.
+COMPOSITE_WEIGHTS = {"quality": 0.80, "latency": 0.10, "cost": 0.10}
+
+
+def _quality_score(stats: dict, mae_key: str = "mae") -> float | None:
+    """Average of the 0..1 quality signals: pass acc, kappa, spearman, 1 - MAE/4."""
+    parts: list[float] = []
+    for key in ("pass_accuracy", "cohen_kappa", "spearman"):
+        if stats.get(key) is not None:
+            parts.append(max(0.0, float(stats[key])))
+    if stats.get(mae_key) is not None:
+        parts.append(max(0.0, 1.0 - float(stats[mae_key]) / 4.0))
+    return round(sum(parts) / len(parts), 4) if parts else None
+
+
+def _relative(values: list[float | None]) -> list[float | None]:
+    """Min-max normalize where LOWER is better -> best gets 1.0, worst 0.0."""
+    nums = [v for v in values if v is not None]
+    if not nums:
+        return [None] * len(values)
+    lo, hi = min(nums), max(nums)
+    out: list[float | None] = []
+    for v in values:
+        if v is None:
+            out.append(None)
+        elif hi == lo:
+            out.append(1.0)
+        else:
+            out.append(round(1.0 - (v - lo) / (hi - lo), 4))
+    return out
+
+
+def _combine(quality: float | None, latency_score: float | None, cost_score: float | None) -> float | None:
+    if quality is None:
+        return None
+    w = COMPOSITE_WEIGHTS
+    total = w["quality"] * quality
+    denom = w["quality"]
+    if latency_score is not None:
+        total += w["latency"] * latency_score
+        denom += w["latency"]
+    if cost_score is not None:
+        total += w["cost"] * cost_score
+        denom += w["cost"]
+    return round(total / denom, 4)
+
+
+def apply_composites(rows: list[dict]) -> None:
+    """Attach composite (quality + latency + cost) scores, overall and per criterion."""
+    lat_scores = _relative([r["metrics"].get("avg_latency_s") for r in rows])
+    cost_scores = _relative([r["metrics"].get("total_cost_usd") for r in rows])
+    for row, ls, cs in zip(rows, lat_scores, cost_scores):
+        row["composite"] = _combine(_quality_score(row["metrics"], mae_key="score_mae"), ls, cs)
+
+    for criterion in CRITERIA:
+        # Per-criterion latency/cost when recorded; the model-level value is
+        # the fallback (a model's speed/price doesn't change per criterion).
+        def _lat(r: dict) -> float | None:
+            stats = (r.get("per_criterion") or {}).get(criterion) or {}
+            return stats.get("avg_latency_s") or r["metrics"].get("avg_latency_s")
+
+        def _cost(r: dict) -> float | None:
+            stats = (r.get("per_criterion") or {}).get(criterion) or {}
+            return stats.get("total_cost_usd") or r["metrics"].get("total_cost_usd")
+
+        lat_c = _relative([_lat(r) for r in rows])
+        cost_c = _relative([_cost(r) for r in rows])
+        for row, ls, cs in zip(rows, lat_c, cost_c):
+            stats = (row.get("per_criterion") or {}).get(criterion)
+            if stats is None:
+                continue
+            stats["composite"] = _combine(_quality_score(stats), ls, cs)
 
 
 def _num(value, default: float = -9.0) -> float:
@@ -144,24 +246,27 @@ def _num(value, default: float = -9.0) -> float:
 
 
 def pick_overall_winner(rows: list[dict]) -> dict | None:
-    """Best judge overall: kappa, then Spearman, then MAE, then pass accuracy."""
+    """Best judge overall by composite (quality 80% + latency 10% + cost 10%)."""
     scored = [r for r in rows if r["metrics"].get("n")]
     if not scored:
         return None
     best = max(
         scored,
         key=lambda r: (
+            _num(r.get("composite")),
             _num(r["metrics"].get("cohen_kappa")),
             _num(r["metrics"].get("spearman")),
-            -_num(r["metrics"].get("score_mae"), default=9.0),
-            _num(r["metrics"].get("pass_accuracy")),
         ),
     )
-    return {"key": best["key"], "display_name": best["display_name"]}
+    return {
+        "key": best["key"],
+        "display_name": best["display_name"],
+        "composite": best.get("composite"),
+    }
 
 
 def pick_criterion_winners(rows: list[dict]) -> dict[str, dict]:
-    """Best judge per criterion: Spearman vs gold, then MAE, then pass accuracy."""
+    """Best judge per criterion by that criterion's composite score."""
     winners: dict[str, dict] = {}
     for criterion in CRITERIA:
         candidates = [r for r in rows if r.get("per_criterion", {}).get(criterion)]
@@ -170,9 +275,9 @@ def pick_criterion_winners(rows: list[dict]) -> dict[str, dict]:
         best = max(
             candidates,
             key=lambda r: (
+                _num(r["per_criterion"][criterion].get("composite")),
                 _num(r["per_criterion"][criterion].get("spearman")),
                 -_num(r["per_criterion"][criterion].get("mae"), default=9.0),
-                _num(r["per_criterion"][criterion].get("pass_accuracy")),
             ),
         )
         winners[criterion] = {
@@ -215,12 +320,14 @@ def build_payload(items: list[TestItem], model_rows: list[dict]) -> dict:
     task_mix: dict[str, int] = defaultdict(int)
     for item in items:
         task_mix[item.task_type.value] += 1
+    apply_composites(model_rows)
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "n_items": len(items),
         "task_mix": dict(task_mix),
         "criteria": CRITERIA,
         "models": model_rows,
+        "weights": COMPOSITE_WEIGHTS,
         "winners": {
             "overall": pick_overall_winner(model_rows),
             "per_criterion": pick_criterion_winners(model_rows),
@@ -258,11 +365,16 @@ def main() -> None:
 
     winners = payload["winners"]
     if winners["overall"]:
-        print(f"\n=== Best judge overall: {winners['overall']['display_name']} ===")
+        print(
+            f"\n=== Best judge overall: {winners['overall']['display_name']} "
+            f"(composite={winners['overall'].get('composite')}; "
+            f"quality 80% + latency 10% + cost 10%) ==="
+        )
     for criterion, w in winners["per_criterion"].items():
         print(
             f"  best {criterion:<13} {w['display_name']:<24} "
-            f"(rho={w['spearman']}  mae={w['mae']}  pass_acc={w['pass_accuracy']})"
+            f"(composite={w.get('composite')}  rho={w['spearman']}  mae={w['mae']}  "
+            f"pass_acc={w['pass_accuracy']})"
         )
 
     out_dir = Path(args.out)

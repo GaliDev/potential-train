@@ -167,6 +167,47 @@ def test_pick_criterion_winners_selects_best_per_criterion():
     assert winners["safety"]["key"] == "b"
 
 
+def test_composites_factor_in_latency_and_cost():
+    from hf_judges.run_benchmark import apply_composites, pick_overall_winner
+
+    # Identical quality; "cheap" is faster and cheaper -> must win.
+    expensive = make_row("expensive", kappa=0.9, spearman=0.9, mae=0.3, per_criterion={})
+    cheap = make_row("cheap", kappa=0.9, spearman=0.9, mae=0.3, per_criterion={})
+    expensive["metrics"].update({"avg_latency_s": 17.0, "total_cost_usd": 2.6})
+    cheap["metrics"].update({"avg_latency_s": 7.0, "total_cost_usd": 0.01})
+    rows = [expensive, cheap]
+    apply_composites(rows)
+    assert cheap["composite"] > expensive["composite"]
+    assert pick_overall_winner(rows)["key"] == "cheap"
+
+
+def test_composites_quality_still_dominates():
+    from hf_judges.run_benchmark import apply_composites, pick_overall_winner
+
+    # Much better quality beats much better latency/cost (80/10/10 weights).
+    strong = make_row("strong", kappa=1.0, spearman=0.98, mae=0.2, per_criterion={})
+    weak = make_row("weak", kappa=0.3, spearman=0.4, mae=1.2, per_criterion={})
+    strong["metrics"].update({"avg_latency_s": 17.0, "total_cost_usd": 2.6})
+    weak["metrics"].update({"avg_latency_s": 1.0, "total_cost_usd": 0.001})
+    rows = [strong, weak]
+    apply_composites(rows)
+    assert pick_overall_winner(rows)["key"] == "strong"
+
+
+def test_criterion_composites_use_model_latency_cost_fallback():
+    from hf_judges.run_benchmark import apply_composites, pick_criterion_winners
+
+    # Equal criterion quality; rows lack per-criterion latency/cost, so the
+    # model-level values decide -> the cheap/fast model wins the criterion.
+    a = make_row("slow", 0.9, 0.9, 0.3, per_criterion={"safety": crit_stats(spearman=0.9)})
+    b = make_row("fast", 0.9, 0.9, 0.3, per_criterion={"safety": crit_stats(spearman=0.9)})
+    a["metrics"].update({"avg_latency_s": 17.0, "total_cost_usd": 2.6})
+    b["metrics"].update({"avg_latency_s": 7.0, "total_cost_usd": 0.01})
+    rows = [a, b]
+    apply_composites(rows)
+    assert pick_criterion_winners(rows)["safety"]["key"] == "fast"
+
+
 def test_per_criterion_stats_computes_against_gold():
     from hf_judges.run_benchmark import per_criterion_stats
     from eval_harness.schemas import AggregateResult, JudgeVerdict
@@ -229,21 +270,32 @@ def test_render_report_smoke():
                 "error_detail": [],
             }
         ],
+        "weights": {"quality": 0.80, "latency": 0.10, "cost": 0.10},
         "winners": {
-            "overall": {"key": "qwen3-8b", "display_name": "Qwen3 8B"},
+            "overall": {"key": "qwen3-8b", "display_name": "Qwen3 8B", "composite": 0.81},
             "per_criterion": {
                 "correctness": {
                     "key": "qwen3-8b", "display_name": "Qwen3 8B",
                     "spearman": 0.7, "mae": 0.6, "pass_accuracy": 0.83, "n": 6,
+                    "composite": 0.8, "avg_latency_s": 4.0, "total_cost_usd": 0.01,
                 },
             },
         },
+    }
+    payload["models"][0]["per_criterion"] = {
+        "correctness": {
+            "n": 6, "pass_accuracy": 0.83, "cohen_kappa": 0.6, "spearman": 0.7,
+            "mae": 0.6, "mean_score": 3.5, "avg_latency_s": 4.0,
+            "total_cost_usd": 0.01, "composite": 0.8,
+        }
     }
     html = render_report(payload)
     assert "Qwen3 8B" in html
     assert "meets" in html  # target bar evaluation
     assert "Best judge overall" in html
     assert "Best judge per criterion" in html
+    assert "Per-criterion breakdown" in html
+    assert "quality 80% + latency 10% + cost 10%" in html
     assert "<table>" in html
 
 

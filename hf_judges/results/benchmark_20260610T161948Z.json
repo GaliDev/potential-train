@@ -39,35 +39,40 @@
           "spearman": 0.9522,
           "mae": 0.2237,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.197
+          "mean_score": 3.197,
+          "composite": 0.9549
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.9518,
           "mae": 0.1974,
           "pass_accuracy": 0.9474,
-          "mean_score": 3.25
+          "mean_score": 3.25,
+          "composite": 0.9495
         },
         "completeness": {
           "n": 76,
           "spearman": 0.913,
           "mae": 0.3421,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.105
+          "mean_score": 3.105,
+          "composite": 0.9365
         },
         "coherence": {
           "n": 76,
           "spearman": 0.9235,
           "mae": 0.2763,
           "pass_accuracy": 0.9605,
-          "mean_score": 3.25
+          "mean_score": 3.25,
+          "composite": 0.9402
         },
         "safety": {
           "n": 76,
           "spearman": 0.8322,
           "mae": 0.6184,
           "pass_accuracy": 0.8421,
-          "mean_score": 3.776
+          "mean_score": 3.776,
+          "composite": 0.8615
         }
       },
       "per_criterion_mean": {
@@ -83,7 +88,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9542
     },
     {
       "key": "llama31-8b",
@@ -110,35 +116,40 @@
           "spearman": 0.9236,
           "mae": 0.3553,
           "pass_accuracy": 0.9474,
-          "mean_score": 3.066
+          "mean_score": 3.066,
+          "composite": 0.9419
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.9503,
           "mae": 0.3421,
           "pass_accuracy": 0.9737,
-          "mean_score": 2.947
+          "mean_score": 2.947,
+          "composite": 0.9569
         },
         "completeness": {
           "n": 76,
           "spearman": 0.9567,
           "mae": 0.4079,
           "pass_accuracy": 0.9868,
-          "mean_score": 2.803
+          "mean_score": 2.803,
+          "composite": 0.9577
         },
         "coherence": {
           "n": 76,
           "spearman": 0.9652,
           "mae": 0.2632,
           "pass_accuracy": 1.0,
-          "mean_score": 2.947
+          "mean_score": 2.947,
+          "composite": 0.9732
         },
         "safety": {
           "n": 76,
           "spearman": 0.8876,
           "mae": 0.4211,
           "pass_accuracy": 0.9211,
-          "mean_score": 3.184
+          "mean_score": 3.184,
+          "composite": 0.9209
         }
       },
       "per_criterion_mean": {
@@ -154,7 +165,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9717
     },
     {
       "key": "qwen3-14b",
@@ -181,35 +193,40 @@
           "spearman": 0.9626,
           "mae": 0.25,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.039
+          "mean_score": 3.039,
+          "composite": 0.9643
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.959,
           "mae": 0.25,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.066
+          "mean_score": 3.066,
+          "composite": 0.9634
         },
         "completeness": {
           "n": 76,
           "spearman": 0.9654,
           "mae": 0.2763,
           "pass_accuracy": 1.0,
-          "mean_score": 2.934
+          "mean_score": 2.934,
+          "composite": 0.9703
         },
         "coherence": {
           "n": 76,
           "spearman": 0.9728,
           "mae": 0.1842,
           "pass_accuracy": 1.0,
-          "mean_score": 3.026
+          "mean_score": 3.026,
+          "composite": 0.9785
         },
         "safety": {
           "n": 76,
           "spearman": 0.9558,
           "mae": 0.2368,
           "pass_accuracy": 0.9342,
-          "mean_score": 3.184
+          "mean_score": 3.184,
+          "composite": 0.9529
         }
       },
       "per_criterion_mean": {
@@ -225,7 +242,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9786
     },
     {
       "key": "claude",
@@ -252,35 +270,40 @@
           "spearman": 0.9749,
           "mae": 0.1842,
           "pass_accuracy": 0.9342,
-          "mean_score": 3.158
+          "mean_score": 3.158,
+          "composite": 0.7634
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.9136,
           "mae": 0.3553,
           "pass_accuracy": 0.8553,
-          "mean_score": 3.408
+          "mean_score": 3.408,
+          "composite": 0.7147
         },
         "completeness": {
           "n": 76,
           "spearman": 0.9391,
           "mae": 0.3421,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.026
+          "mean_score": 3.026,
+          "composite": 0.7539
         },
         "coherence": {
           "n": 76,
           "spearman": 0.5585,
           "mae": 1.0395,
           "pass_accuracy": 0.6184,
-          "mean_score": 4.145
+          "mean_score": 4.145,
+          "composite": 0.5112
         },
         "safety": {
           "n": 76,
           "spearman": 0.1479,
           "mae": 1.8026,
           "pass_accuracy": 0.4342,
-          "mean_score": 4.987
+          "mean_score": 4.987,
+          "composite": 0.3018
         }
       },
       "per_criterion_mean": {
@@ -296,7 +319,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.7819
     },
     {
       "key": "grok",
@@ -323,35 +347,40 @@
           "spearman": 0.9413,
           "mae": 0.3421,
           "pass_accuracy": 0.9737,
-          "mean_score": 2.895
+          "mean_score": 2.895,
+          "composite": 0.8279
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.9024,
           "mae": 0.3816,
           "pass_accuracy": 0.8421,
-          "mean_score": 3.197
+          "mean_score": 3.197,
+          "composite": 0.7798
         },
         "completeness": {
           "n": 76,
           "spearman": 0.6547,
           "mae": 0.8289,
           "pass_accuracy": 0.8684,
-          "mean_score": 3.197
+          "mean_score": 3.197,
+          "composite": 0.691
         },
         "coherence": {
           "n": 76,
           "spearman": 0.0909,
           "mae": 1.7105,
           "pass_accuracy": 0.4474,
-          "mean_score": 4.842
+          "mean_score": 4.842,
+          "composite": 0.3695
         },
         "safety": {
           "n": 76,
           "spearman": 0.2105,
           "mae": 1.7105,
           "pass_accuracy": 0.4605,
-          "mean_score": 4.895
+          "mean_score": 4.895,
+          "composite": 0.405
         }
       },
       "per_criterion_mean": {
@@ -367,7 +396,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.8196
     },
     {
       "key": "panel",
@@ -394,35 +424,40 @@
           "spearman": 0.9722,
           "mae": 0.2368,
           "pass_accuracy": 0.9868,
-          "mean_score": 3.026
+          "mean_score": 3.026,
+          "composite": 0.9126
         },
         "faithfulness": {
           "n": 76,
           "spearman": 0.9683,
           "mae": 0.2632,
           "pass_accuracy": 0.9868,
-          "mean_score": 2.974
+          "mean_score": 2.974,
+          "composite": 0.9098
         },
         "completeness": {
           "n": 76,
           "spearman": 0.9726,
           "mae": 0.2895,
           "pass_accuracy": 0.9737,
-          "mean_score": 3.0
+          "mean_score": 3.0,
+          "composite": 0.9057
         },
         "coherence": {
           "n": 76,
           "spearman": 0.8415,
           "mae": 0.4211,
           "pass_accuracy": 0.9211,
-          "mean_score": 3.316
+          "mean_score": 3.316,
+          "composite": 0.8479
         },
         "safety": {
           "n": 76,
           "spearman": 0.5784,
           "mae": 1.0789,
           "pass_accuracy": 0.6184,
-          "mean_score": 4.263
+          "mean_score": 4.263,
+          "composite": 0.6532
         }
       },
       "per_criterion_mean": {
@@ -434,41 +469,46 @@
       },
       "parse_counts": {},
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.912
     }
   ],
   "winners": {
     "overall": {
-      "key": "claude",
-      "display_name": "Claude Opus 4.8"
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "composite": 0.9786
     },
     "per_criterion": {
       "correctness": {
-        "key": "claude",
-        "display_name": "Claude Opus 4.8",
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
         "n": 76,
-        "spearman": 0.9749,
-        "mae": 0.1842,
-        "pass_accuracy": 0.9342,
-        "mean_score": 3.158
+        "spearman": 0.9626,
+        "mae": 0.25,
+        "pass_accuracy": 0.9737,
+        "mean_score": 3.039,
+        "composite": 0.9643
       },
       "faithfulness": {
-        "key": "panel",
-        "display_name": "GPT-4o panel (baseline)",
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
         "n": 76,
-        "spearman": 0.9683,
-        "mae": 0.2632,
-        "pass_accuracy": 0.9868,
-        "mean_score": 2.974
+        "spearman": 0.959,
+        "mae": 0.25,
+        "pass_accuracy": 0.9737,
+        "mean_score": 3.066,
+        "composite": 0.9634
       },
       "completeness": {
-        "key": "panel",
-        "display_name": "GPT-4o panel (baseline)",
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
         "n": 76,
-        "spearman": 0.9726,
-        "mae": 0.2895,
-        "pass_accuracy": 0.9737,
-        "mean_score": 3.0
+        "spearman": 0.9654,
+        "mae": 0.2763,
+        "pass_accuracy": 1.0,
+        "mean_score": 2.934,
+        "composite": 0.9703
       },
       "coherence": {
         "key": "qwen3-14b",
@@ -477,7 +517,8 @@
         "spearman": 0.9728,
         "mae": 0.1842,
         "pass_accuracy": 1.0,
-        "mean_score": 3.026
+        "mean_score": 3.026,
+        "composite": 0.9785
       },
       "safety": {
         "key": "qwen3-14b",
@@ -486,8 +527,14 @@
         "spearman": 0.9558,
         "mae": 0.2368,
         "pass_accuracy": 0.9342,
-        "mean_score": 3.184
+        "mean_score": 3.184,
+        "composite": 0.9529
       }
     }
+  },
+  "weights": {
+    "quality": 0.8,
+    "latency": 0.1,
+    "cost": 0.1
   }
 }

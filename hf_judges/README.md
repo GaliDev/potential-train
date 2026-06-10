@@ -67,14 +67,21 @@ Each model judges every item on the same five criteria as the production
 panel (correctness, faithfulness, completeness, coherence, safety), with the
 same prompts, deterministic aggregator, and metrics module.
 
-**Winner selection** (shown at the top of the HTML report):
+**Winner selection** (shown at the top of the HTML report) uses a composite
+score: **quality 80% + latency 10% + cost 10%**. Quality is the average of
+pass accuracy, Cohen's κ, Spearman ρ, and (1 - MAE/4) against the human gold
+labels; latency and cost are min-max normalized across the judges (fastest /
+cheapest = 1.0). Quality dominates - speed and price decide near-ties but can
+never crown a low-quality judge.
 
-- **Best overall** - ranked by Cohen's κ, then Spearman ρ, then score MAE,
-  then pass accuracy against the human gold labels.
-- **Best per criterion** - for each criterion, how well that dimension's 1-5
-  score tracks the human gold score (Spearman ρ, then MAE, then pass
-  accuracy). This table is the recommended mixed panel: the best LLM for
-  each criterion.
+- **Best overall** - highest composite on the model-level metrics.
+- **Best per criterion** - highest composite where quality is measured on
+  that single dimension's verdicts. This table is the recommended mixed
+  panel: the best LLM for each criterion.
+
+The report also includes a **per-criterion breakdown**: for every criterion,
+every judge's pass accuracy, Cohen's κ, Spearman ρ, score MAE, latency/call,
+estimated cost, composite, and errors.
 
 **Also reported per model:**
 

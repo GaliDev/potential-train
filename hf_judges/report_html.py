@@ -115,14 +115,24 @@ def render_report(payload: dict) -> str:
             f"(accuracy {_fmt(acc, '{:.0%}')}, κ {_fmt(kappa, '{:.3f}')})</li>"
         )
 
+    weights = payload.get("weights") or {"quality": 0.70, "latency": 0.15, "cost": 0.15}
+    weights_label = (
+        f"quality {weights['quality']:.0%} + latency {weights['latency']:.0%} "
+        f"+ cost {weights['cost']:.0%}"
+    )
+
     winners = payload.get("winners") or {}
     winners_html = ""
     overall = winners.get("overall")
     if overall:
+        comp = overall.get("composite")
+        comp_txt = f" (composite {comp:.3f})" if comp is not None else ""
         winners_html += (
             f"<div class='winner-banner'>🏆 Best judge overall: "
-            f"<b>{e(overall['display_name'])}</b> — ranked by Cohen's κ, then "
-            f"Spearman ρ, then MAE, then pass accuracy.</div>"
+            f"<b>{e(overall['display_name'])}</b>{comp_txt} — ranked by a composite of "
+            f"{weights_label}. Quality = pass accuracy, Cohen's κ, Spearman ρ and "
+            f"score MAE vs the human gold labels; latency and cost are normalized "
+            f"across the judges (fastest / cheapest = 1.0).</div>"
         )
     per_crit_winners = winners.get("per_criterion") or {}
     if per_crit_winners:
@@ -130,21 +140,84 @@ def render_report(payload: dict) -> str:
         for crit, w in per_crit_winners.items():
             winner_rows.append(
                 f"<tr><td><b>{e(crit)}</b></td><td class='win'>{e(w['display_name'])}</td>"
+                f"<td class='num'>{_fmt(w.get('composite'), '{:.3f}')}</td>"
                 f"<td class='num'>{_fmt(w.get('spearman'), '{:.3f}')}</td>"
                 f"<td class='num'>{_fmt(w.get('mae'), '{:.3f}')}</td>"
-                f"<td class='num'>{_fmt(w.get('pass_accuracy'), '{:.0%}')}</td></tr>"
+                f"<td class='num'>{_fmt(w.get('pass_accuracy'), '{:.0%}')}</td>"
+                f"<td class='num'>{_fmt(w.get('avg_latency_s'), '{:.1f}')}</td>"
+                f"<td class='num'>{_fmt(w.get('total_cost_usd'), '{:.4f}')}</td></tr>"
             )
         winners_html += (
             "<h2>🏆 Best judge per criterion (recommended mixed panel)</h2>"
-            "<table><tr><th>Criterion</th><th>Best judge</th><th>Spearman ρ</th>"
-            "<th>MAE</th><th>Pass acc</th></tr>"
+            "<table><tr><th>Criterion</th><th>Best judge</th><th>Composite</th>"
+            "<th>Spearman ρ</th><th>MAE</th><th>Pass acc</th>"
+            "<th>Latency/call (s)</th><th>Est. cost ($)</th></tr>"
             + "".join(winner_rows)
             + "</table>"
-            "<p class='meta'>Per criterion: how well that single dimension's 1–5 score "
-            "tracks the human gold score (Spearman ρ, then MAE, then pass accuracy as "
-            "tie-breakers). Use this table to assemble a mixed panel — the best LLM per "
-            "criterion.</p>"
+            f"<p class='meta'>Winner per criterion = highest composite ({weights_label}). "
+            "Quality measures how well that single dimension's verdicts track the human "
+            "gold labels; latency and cost are the judge's own speed and price. Use this "
+            "table to assemble a mixed panel — the best LLM per criterion.</p>"
         )
+
+    # Full per-criterion breakdown: every metric for every judge, per criterion.
+    _CRIT_COLS = [
+        ("pass_accuracy", "Pass accuracy", "{:.0%}", True),
+        ("cohen_kappa", "Cohen's κ", "{:.3f}", True),
+        ("spearman", "Spearman ρ", "{:.3f}", True),
+        ("mae", "Score MAE", "{:.3f}", False),
+        ("avg_latency_s", "Latency/call (s)", "{:.1f}", False),
+        ("total_cost_usd", "Est. cost ($)", "{:.4f}", False),
+        ("composite", "Composite", "{:.3f}", True),
+    ]
+    breakdown_html = ""
+    if rows and any(r.get("per_criterion") for r in rows):
+        sections = []
+        for crit in criteria:
+            crit_winner = (per_crit_winners.get(crit) or {}).get("key")
+            with_stats = [r for r in rows if (r.get("per_criterion") or {}).get(crit)]
+            if not with_stats:
+                continue
+            bests: dict[str, float] = {}
+            for key, _l, _f, higher in _CRIT_COLS:
+                vals = [
+                    r["per_criterion"][crit].get(key)
+                    for r in with_stats
+                    if r["per_criterion"][crit].get(key) is not None
+                ]
+                if vals:
+                    bests[key] = max(vals) if higher else min(vals)
+            body = []
+            for r in with_stats:
+                stats = r["per_criterion"][crit]
+                name_cls = "win" if r.get("key") == crit_winner else ""
+                cells = [f"<td class='{name_cls}'>{e(r['display_name'])}</td>"]
+                for key, _l, fmt, _h in _CRIT_COLS:
+                    val = stats.get(key)
+                    cls = (
+                        "num best"
+                        if val is not None and val == bests.get(key) and len(with_stats) > 1
+                        else "num"
+                    )
+                    cells.append(f"<td class='{cls}'>{_fmt(val, fmt)}</td>")
+                cells.append(f"<td class='num'>{r.get('errors', 0)}</td>")
+                body.append("<tr>" + "".join(cells) + "</tr>")
+            header = "".join(f"<th>{label}</th>" for _, label, _, _ in _CRIT_COLS)
+            sections.append(
+                f"<h3>{e(crit)}</h3>"
+                f"<table><tr><th>Model</th>{header}<th>Errors</th></tr>{''.join(body)}</table>"
+            )
+        if sections:
+            breakdown_html = (
+                "<h2>Per-criterion breakdown — every judge on every metric</h2>"
+                "<p class='meta'>For each criterion: how each judge's verdicts on that "
+                "single dimension compare to the human gold labels, plus that judge's "
+                "latency, cost, and composite. Green = best in column; the highlighted "
+                "model is the criterion winner. Latency is per judge call; cost is the "
+                "total for that criterion across the run. Errors are items the judge "
+                "failed to evaluate at all (counted at the model level).</p>"
+                + "".join(sections)
+            )
 
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     task_mix = ", ".join(f"{k}: {v}" for k, v in payload["task_mix"].items())
@@ -209,6 +282,8 @@ evidence behind its numbers — treat anything other than 0 with suspicion.</dd>
 <h2>Mean score per criterion</h2>
 <table><tr><th>Model</th>{crit_header}</tr>{"".join(crit_rows)}</table>
 <p class="meta">A model whose row sits notably above the others is a lenient judge; below, a harsh one.</p>
+
+{breakdown_html}
 
 <h2>Output reliability (structured-output discipline)</h2>
 <table><tr><th>Model</th><th>Clean JSON</th><th>Regex rescue</th><th>Fallback</th></tr>{"".join(parse_rows)}</table>
