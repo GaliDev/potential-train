@@ -12,7 +12,7 @@ import statistics
 from dataclasses import dataclass, field
 
 from ..schemas import Criterion, TaskType
-from ..store import EvalRow, RunSignalRow, fetch_evals, fetch_run_signals, list_agents
+from ..storage import EvalRow, RunSignalRow, get_store
 
 
 @dataclass
@@ -123,8 +123,9 @@ def compute_agent_performance(
     judge_mode: str | None = "panel",
 ) -> AgentPerformance | None:
     """Aggregate the store's eval rows for one agent into a profile."""
-    rows = fetch_evals(agent_id=agent_id, task_type=task_type, judge_mode=judge_mode)
-    signals = fetch_run_signals(agent_id=agent_id, task_type=task_type)
+    store = get_store()
+    rows = store.fetch_evals(agent_id=agent_id, task_type=task_type, judge_mode=judge_mode)
+    signals = store.fetch_run_signals(agent_id=agent_id, task_type=task_type)
     if not rows and not signals:
         return None
 
@@ -155,7 +156,7 @@ def compute_all_performance(
 ) -> list[AgentPerformance]:
     """Profiles for every registered agent that has evaluation history."""
     profiles: list[AgentPerformance] = []
-    for agent in list_agents(task_type):
+    for agent in get_store().list_agents(task_type):
         perf = compute_agent_performance(agent.agent_id, agent.task_type, judge_mode=judge_mode)
         if perf is not None:
             profiles.append(perf)

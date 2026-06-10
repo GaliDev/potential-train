@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ..schemas import AutonomyTier, TaskType
-from ..store import log_audit
+from ..storage import get_store
 from .autonomy import assign_tier
 from .profiles import compute_agent_performance
 
@@ -74,7 +74,7 @@ def decide(
         reasons=reasons,
     )
     if audit:
-        log_audit("policy_decision", agent_id, decision.to_dict())
+        get_store().log_audit("policy_decision", agent_id, decision.to_dict())
     return decision
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..store import fetch_run_signals, log_audit
+from ..storage import get_store
 from .profiles import AgentPerformance, compute_all_performance
 
 ERROR_DRIFT_THRESHOLD = 0.15
@@ -50,7 +50,7 @@ def detect_drift_for_agent(perf: AgentPerformance) -> list[DriftAlert]:
             message=f"Safety flags in {perf.safety_flag_rate:.0%} of runs",
             metric_value=perf.safety_flag_rate,
         ))
-    signals = fetch_run_signals(agent_id=perf.agent_id)
+    signals = get_store().fetch_run_signals(agent_id=perf.agent_id)
     if len(signals) >= 4:
         ordered = sorted(signals, key=lambda s: s.created_at)
         mid = len(ordered) // 2
@@ -78,5 +78,5 @@ def scan_fleet_drift(task_type=None, *, audit: bool = True) -> list[DriftAlert]:
         all_alerts.extend(alerts)
         if audit:
             for alert in alerts:
-                log_audit("drift_alert", alert.agent_id, alert.to_dict())
+                get_store().log_audit("drift_alert", alert.agent_id, alert.to_dict())
     return all_alerts
