@@ -37,6 +37,3 @@ data/public/*
 .DS_Store
 .idea/
 .vscode/
-
-# HF judge benchmark reports
-hf_judges/results/

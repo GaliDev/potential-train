@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>HF LLM-as-Judge Benchmark</title><style>
+body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 2rem auto;
+       max-width: 1000px; color: #1a1d27; padding: 0 1rem; }
+h1 { font-size: 1.6rem; } h2 { font-size: 1.15rem; margin-top: 2.2rem; }
+.meta { color: #666; font-size: .9rem; }
+table { border-collapse: collapse; width: 100%; margin-top: .8rem; font-size: .92rem; }
+th, td { border: 1px solid #e2e4ea; padding: .45rem .6rem; text-align: left; }
+th { background: #f4f5f8; font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.best { background: #e7f6ec; font-weight: 600; }
+.bar-wrap { background: #eef0f4; border-radius: 4px; height: 16px; min-width: 160px; }
+.bar { background: #4c7dd0; border-radius: 4px; height: 16px; }
+.note { background: #fff8e6; border: 1px solid #f0e0b0; border-radius: 6px;
+        padding: .7rem 1rem; font-size: .9rem; margin-top: 1rem; }
+.target-met { color: #15803d; font-weight: 600; } .target-miss { color: #b91c1c; }
+footer { margin-top: 2.5rem; color: #888; font-size: .8rem; }
+</style></head>
+<body>
+<h1>HF LLM-as-Judge Benchmark</h1>
+<p class="meta">Generated 2026-06-10 15:00 UTC · 30 gold items (rag_qa: 10, summarization: 10, translation: 10)
+· judged on 5 criteria: correctness, faithfulness, completeness, coherence, safety</p>
+
+<h2>Ranking — agreement with human gold labels</h2>
+<table>
+<tr><th>Model</th><th>Pass accuracy</th><th>Cohen's κ</th><th>Spearman ρ</th><th>Score MAE</th><th>Latency/item (s)</th><th>Est. cost ($)</th><th>Errors</th></tr>
+<tr><td><b>Qwen3 8B</b><br><span class='meta'>Qwen/Qwen3-8B</span></td><td class='num best'>100%</td><td class='num best'>1.000</td><td class='num'>0.940</td><td class='num best'>0.282</td><td class='num best'>5.5</td><td class='num best'>0.0030</td><td class='num'>0</td></tr><tr><td><b>Llama 3.1 8B Instruct</b><br><span class='meta'>meta-llama/Llama-3.1-8B-Instruct</span></td><td class='num best'>100%</td><td class='num best'>1.000</td><td class='num'>0.955</td><td class='num'>0.315</td><td class='num'>6.8</td><td class='num'>0.0033</td><td class='num'>0</td></tr><tr><td><b>Qwen3 14B</b><br><span class='meta'>Qwen/Qwen3-14B</span></td><td class='num best'>100%</td><td class='num best'>1.000</td><td class='num best'>0.977</td><td class='num'>0.293</td><td class='num'>7.0</td><td class='num'>0.0050</td><td class='num'>0</td></tr>
+</table>
+<p class="meta">Green = best in column. Pass accuracy / κ / ρ: higher is better. MAE, latency, cost: lower is better.</p>
+
+<h2>Cohen's κ (chance-corrected agreement)</h2>
+<table><tr><th>Model</th><th>κ</th><th class="num">value</th></tr><tr><td>Qwen3 8B</td><td><div class='bar-wrap'><div class='bar' style='width:100%'></div></div></td><td class='num'>1.000</td></tr><tr><td>Llama 3.1 8B Instruct</td><td><div class='bar-wrap'><div class='bar' style='width:100%'></div></div></td><td class='num'>1.000</td></tr><tr><td>Qwen3 14B</td><td><div class='bar-wrap'><div class='bar' style='width:100%'></div></div></td><td class='num'>1.000</td></tr></table>
+
+<h2>Mean score per criterion</h2>
+<table><tr><th>Model</th><th>correctness</th><th>faithfulness</th><th>completeness</th><th>coherence</th><th>safety</th></tr><tr><td>Qwen3 8B</td><td class='num'>3.40</td><td class='num'>3.50</td><td class='num'>3.37</td><td class='num'>3.57</td><td class='num'>4.00</td></tr><tr><td>Llama 3.1 8B Instruct</td><td class='num'>3.23</td><td class='num'>3.13</td><td class='num'>2.97</td><td class='num'>3.13</td><td class='num'>3.40</td></tr><tr><td>Qwen3 14B</td><td class='num'>3.27</td><td class='num'>3.30</td><td class='num'>3.17</td><td class='num'>3.20</td><td class='num'>3.40</td></tr></table>
+<p class="meta">A model whose row sits notably above the others is a lenient judge; below, a harsh one.</p>
+
+<h2>Output reliability (structured-output discipline)</h2>
+<table><tr><th>Model</th><th>Clean JSON</th><th>Regex rescue</th><th>Fallback</th></tr><tr><td>Qwen3 8B</td><td class='num'>100%</td><td class='num'>0</td><td class='num'>0</td></tr><tr><td>Llama 3.1 8B Instruct</td><td class='num'>95%</td><td class='num'>8</td><td class='num'>0</td></tr><tr><td>Qwen3 14B</td><td class='num'>100%</td><td class='num'>0</td><td class='num'>0</td></tr></table>
+<p class="meta">Fallback verdicts default toward score 3 and add noise — prefer models with high clean-JSON rates.</p>
+
+<h2>Platform bar (&ge;80% agreement, κ &ge; 0.6)</h2>
+<ul><li><span class='target-met'>Qwen3 8B: meets</span> the platform bar (accuracy 100%, κ 1.000)</li><li><span class='target-met'>Llama 3.1 8B Instruct: meets</span> the platform bar (accuracy 100%, κ 1.000)</li><li><span class='target-met'>Qwen3 14B: meets</span> the platform bar (accuracy 100%, κ 1.000)</li></ul>
+
+<div class="note"><b>Reading this report:</b> agreement is measured on the project's
+hand-labeled gold set against <code>gold_pass</code> / <code>gold_score</code> using the
+same metrics module as the GPT-4o panel benchmark. Costs are indicative estimates from
+serverless per-token rates.</div>
+
+<footer>hf_judges benchmark · branch llm-as-judges</footer>
+</body></html>

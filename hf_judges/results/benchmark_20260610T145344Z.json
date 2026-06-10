@@ -1,0 +1,146 @@
+{
+  "generated_at": "2026-06-10T14:53:44.097411+00:00",
+  "n_items": 3,
+  "task_mix": {
+    "rag_qa": 1,
+    "summarization": 1,
+    "translation": 1
+  },
+  "criteria": [
+    "correctness",
+    "faithfulness",
+    "completeness",
+    "coherence",
+    "safety"
+  ],
+  "models": [
+    {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "model_id": "Qwen/Qwen3-8B",
+      "judge_mode": "hf_qwen3-8b",
+      "metrics": {
+        "n": 3,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.866,
+        "spearman_p": 0.3333,
+        "score_mae": 0.3167,
+        "avg_latency_s": 6.4321,
+        "total_cost_usd": 0.000296,
+        "cost_per_item_usd": 9.9e-05
+      },
+      "per_criterion_mean": {
+        "correctness": 4.0,
+        "faithfulness": 4.333,
+        "completeness": 3.333,
+        "coherence": 4.333,
+        "safety": 5.0
+      },
+      "parse_counts": {
+        "json": 15,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": []
+    },
+    {
+      "key": "llama31-8b",
+      "display_name": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "judge_mode": "hf_llama31-8b",
+      "metrics": {
+        "n": 0,
+        "pass_accuracy": null,
+        "cohen_kappa": null,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "spearman": null,
+        "spearman_p": null,
+        "score_mae": null,
+        "avg_latency_s": 0.0,
+        "total_cost_usd": 0.0,
+        "cost_per_item_usd": 0.0
+      },
+      "per_criterion_mean": {
+        "correctness": null,
+        "faithfulness": null,
+        "completeness": null,
+        "coherence": null,
+        "safety": null
+      },
+      "parse_counts": {
+        "json": 4,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 3,
+      "error_detail": [
+        {
+          "item_id": "g_rag_004",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        },
+        {
+          "item_id": "g_sum_015",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        },
+        {
+          "item_id": "g_tr_010",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        }
+      ]
+    },
+    {
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "model_id": "Qwen/Qwen3-14B",
+      "judge_mode": "hf_qwen3-14b",
+      "metrics": {
+        "n": 0,
+        "pass_accuracy": null,
+        "cohen_kappa": null,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "spearman": null,
+        "spearman_p": null,
+        "score_mae": null,
+        "avg_latency_s": 0.0,
+        "total_cost_usd": 0.0,
+        "cost_per_item_usd": 0.0
+      },
+      "per_criterion_mean": {
+        "correctness": null,
+        "faithfulness": null,
+        "completeness": null,
+        "coherence": null,
+        "safety": null
+      },
+      "parse_counts": {
+        "json": 0,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 3,
+      "error_detail": [
+        {
+          "item_id": "g_rag_004",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        },
+        {
+          "item_id": "g_sum_015",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        },
+        {
+          "item_id": "g_tr_010",
+          "error": "Error code: 402 - {'error': 'You have depleted your monthly included credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get 20x more included usage.'}"
+        }
+      ]
+    }
+  ]
+}
