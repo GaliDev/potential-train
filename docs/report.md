@@ -93,6 +93,14 @@ now informed by both quality *and* operational reliability.
   policy engine with an audit log, and **drift/incident alerting** over the
   operational signals.
 
+Within the governance layer, the deterministic **decision engine** - task
+router, autonomy calibrator, drift/incident detector, and a policy/precedence
+gate - converts the stored **signals** (aggregated quality + operational
+performance) into decisions. The signals are its *inputs*; performance reviews,
+the audit log, and the write-back/gating **effects** are its *outputs*. In other
+words, "governance layer" is the umbrella capability, and the "decision engine"
+is its deterministic core (the part that actually decides).
+
 LLM-backed blocks show their model in parentheses; unlabeled blocks are
 deterministic (no LLM call).
 
@@ -119,18 +127,30 @@ flowchart TD
     Gold["Human gold labels"] --> Bench["Benchmark: kappa / accuracy / Spearman / latency / cost"]
     Store --> Bench
     subgraph gov [Governance Layer]
-      Store --> Router[Task Router]
-      Store --> Autonomy[Autonomy Calibrator]
-      Store --> Review["Performance Reviews (LLM: gpt-4o-mini, optional; deterministic fallback)"]
-      Store --> Drift[Drift / Incident Alerts]
-      Router --> Policy[Policy engine + audit log]
-      Autonomy --> Policy
-      Drift --> Policy
+      Signals["Signals: AgentPerformance (quality + operational aggregates)"]
+      subgraph engine [Decision Engine - deterministic, no LLM]
+        Router[Task Router]
+        Autonomy[Autonomy Calibrator]
+        Drift[Drift / Incident Detector]
+        Policy["Policy + Precedence Gate"]
+        Router --> Policy
+        Autonomy --> Policy
+        Drift --> Policy
+      end
+      Signals --> Router
+      Signals --> Autonomy
+      Signals --> Drift
+      Signals --> Review["Performance Reviews (LLM: gpt-4o-mini, optional; deterministic fallback)"]
+      Policy --> Audit[("Audit log")]
     end
-    Bench --> UI["FastAPI + Streamlit (incl. Operations tab)"]
+    Store --> Signals
+    Policy --> Effects["Effects: gate next agent call / write decisions back (e.g. Langfuse)"]
+    Effects -. feedback loop .-> Fleet
+    Bench --> UI["FastAPI + Streamlit (Operations tab)"]
     Policy --> UI
     Review --> UI
     Drift --> UI
+    Audit --> UI
 ```
 
 **Technology stack.**
