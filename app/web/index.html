@@ -259,6 +259,18 @@ button{font-family:inherit}
 .modal{background:var(--surface); border-radius:14px; width:min(460px,100%); box-shadow:0 24px 60px -20px rgba(20,22,28,.5); overflow:hidden}
 .modal header{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--hair)}
 .modal .body{padding:16px; font-size:13px; color:var(--muted); line-height:1.55}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0F1117; --surface:#161B22; --surface-2:#0D1117;
+    --ink:#E6EDF3; --muted:#8B949E; --faint:#6E7681; --hair:#30363D; --hair-strong:#21262D;
+    --brand:#7C5EF0; --brand-2:#9A8CFF; --brand-wash:#2D2340; --brand-line:#4A4170;
+    --ok:#238636; --ok-wash:#0D3920; --ok-line:#0E5A1F;
+    --warn:#7F5726; --warn-wash:#3D2817; --warn-line:#563A1B;
+    --bad:#B42323; --bad-wash:#3D1F1A; --bad-line:#5D201D;
+    --neutral:#6E7681; --neutral-wash:#161B22;
+  }
+}
 </style>
 </head>
 <body>
@@ -349,7 +361,7 @@ button{font-family:inherit}
    Live: fleet ← /decisions+/performance+/agents+/audit, spotlight ← /decision,
    routing ← POST /route, kpis ← /kpi, review ← /review/{id}.
    Mock fallback keeps this file fully usable standalone. */
-const API_BASE = null;
+const API_BASE = "http://localhost:8000";
 
 const CRITS = ["correctness","faithfulness","completeness","coherence","safety"];
 const TIER_LABEL = {full_auto:"Full auto", auto_spot_check:"Auto + spot check", human_in_loop:"Human in the loop", blocked:"Blocked"};
