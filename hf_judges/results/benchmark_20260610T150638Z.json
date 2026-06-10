@@ -46,7 +46,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9753
     },
     {
       "key": "llama31-8b",
@@ -80,7 +81,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9502
     },
     {
       "key": "qwen3-14b",
@@ -114,7 +116,8 @@
         "fallback": 0
       },
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.9487
     },
     {
       "key": "panel",
@@ -144,7 +147,21 @@
       },
       "parse_counts": {},
       "errors": 0,
-      "error_detail": []
+      "error_detail": [],
+      "composite": 0.7845
     }
-  ]
+  ],
+  "weights": {
+    "quality": 0.8,
+    "latency": 0.1,
+    "cost": 0.1
+  },
+  "winners": {
+    "overall": {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "composite": 0.9753
+    },
+    "per_criterion": {}
+  }
 }
