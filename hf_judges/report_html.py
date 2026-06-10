@@ -32,6 +32,8 @@ td.best { background: #e7f6ec; font-weight: 600; }
 .bar { background: #4c7dd0; border-radius: 4px; height: 16px; }
 .note { background: #fff8e6; border: 1px solid #f0e0b0; border-radius: 6px;
         padding: .7rem 1rem; font-size: .9rem; margin-top: 1rem; }
+dl.metrics dt { font-weight: 600; margin-top: .8rem; }
+dl.metrics dd { margin: .15rem 0 0 0; color: #444; }
 .target-met { color: #15803d; font-weight: 600; } .target-miss { color: #b91c1c; }
 footer { margin-top: 2.5rem; color: #888; font-size: .8rem; }
 """
@@ -126,6 +128,43 @@ def render_report(payload: dict) -> str:
 {"".join(ranking_rows)}
 </table>
 <p class="meta">Green = best in column. Pass accuracy / κ / ρ: higher is better. MAE, latency, cost: lower is better.</p>
+
+<h2>What each metric means</h2>
+<dl class="metrics">
+<dt>Pass accuracy</dt>
+<dd>The share of items where the judge's overall pass/fail verdict matches the human
+label. 100% means the judge agreed with the human on every accept/reject decision.
+Simple to read, but it can look flattering when most items are clear-cut — which is
+why it is paired with κ below.</dd>
+
+<dt>Cohen's κ (kappa)</dt>
+<dd>Pass/fail agreement <i>corrected for luck</i>. If a judge passed almost everything
+and most items happen to be passes, raw accuracy would still look high; κ removes that
+effect. 0 = no better than random guessing, 1 = perfect agreement. Rule of thumb:
+0.4–0.6 moderate, 0.6–0.8 substantial, &gt;0.8 near-perfect. The platform bar is κ &ge; 0.6.</dd>
+
+<dt>Spearman ρ (rho)</dt>
+<dd>Rank correlation between the judge's 1–5 score and the human's 1–5 score. It asks:
+does the judge <i>order</i> the answers from worst to best the same way a human does?
+1.0 = identical ordering, 0 = unrelated. This is the most sensitive quality signal here:
+judges that agree on every pass/fail can still differ on fine-grained ranking.</dd>
+
+<dt>Score MAE (mean absolute error)</dt>
+<dd>The average distance, in points on the 1–5 scale, between the judge's score and the
+human's score. MAE 0.27 means the judge lands within about a quarter of a point of the
+human on a typical item. Lower is better; unlike Spearman it penalizes a judge that is
+consistently too generous or too harsh even when its ranking is right.</dd>
+
+<dt>Latency/item</dt>
+<dd>Average wall-clock seconds to fully judge one item — all five criteria (correctness,
+faithfulness, completeness, coherence, safety) including network time. Determines how
+fast a batch of traces can be evaluated and what a real-time judging loop would feel like.</dd>
+
+<dt>Errors</dt>
+<dd>Items the judge failed to evaluate at all (API failures, rate limits, etc.). Errored
+items are excluded from the metrics above, so a model with many errors has weaker
+evidence behind its numbers — treat anything other than 0 with suspicion.</dd>
+</dl>
 
 <h2>Cohen's κ (chance-corrected agreement)</h2>
 <table><tr><th>Model</th><th>κ</th><th class="num">value</th></tr>{"".join(kappa_bars)}</table>
