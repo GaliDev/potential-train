@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..schemas import AutonomyTier, Criterion
-from ..store import log_audit
+from ..storage import get_store
 from .profiles import AgentPerformance, compute_all_performance, criterion_avg
 
 # Minimum evaluations before we trust a high tier.
@@ -110,5 +110,5 @@ def calibrate_fleet(task_type=None, audit: bool = True) -> list[AutonomyDecision
     decisions = [assign_tier(p) for p in compute_all_performance(task_type)]
     if audit:
         for d in decisions:
-            log_audit("autonomy_assigned", d.agent_id, d.to_dict())
+            get_store().log_audit("autonomy_assigned", d.agent_id, d.to_dict())
     return decisions

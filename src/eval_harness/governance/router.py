@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..store import log_audit
+from ..storage import get_store
 from .profiles import AgentPerformance, compute_all_performance
 
 # Weights for the routing score. Quality and reliability reward; cost and
@@ -148,5 +148,5 @@ def route_next_task(
 
     decision = RoutingDecision(task_type=tt, chosen_agent=chosen, ranking=ranking, rationale=rationale)
     if audit:
-        log_audit("task_routed", chosen or "none", decision.to_dict())
+        get_store().log_audit("task_routed", chosen or "none", decision.to_dict())
     return decision
