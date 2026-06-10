@@ -9,95 +9,86 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#F6F7F9; --surface:#FFFFFF; --surface-2:#FBFBFC;
-  --ink:#15171C; --muted:#5B616E; --faint:#8A909C; --hair:#E4E7EC; --hair-strong:#D3D7DE;
-  --brand:#37356B; --brand-2:#5B57C2; --brand-wash:#EEEEFA;
-  --ok:#1F7A52; --ok-wash:#E6F4EC; --warn:#B5701A; --warn-wash:#FBF0DF; --bad:#BE3B34; --bad-wash:#FBEAE8;
-  --neutral:#5B616E; --neutral-wash:#EEF0F3;
-  --r:8px; --r-lg:12px;
-  --shadow:0 1px 2px rgba(20,22,28,.04), 0 8px 24px -16px rgba(20,22,28,.18);
+  --paper:#F4F5F7; --surface:#FFFFFF; --surface-2:#FAFBFC;
+  --ink:#14161B; --muted:#565C68; --faint:#878D99; --hair:#E6E8EC; --hair-strong:#D2D6DD;
+  --brand:#37356B; --brand-2:#5B57C2; --brand-wash:#EFEEFB; --brand-line:#D9D7F1;
+  --ok:#1F7A52; --ok-wash:#E7F4ED; --ok-line:#BFE3CE;
+  --warn:#B5701A; --warn-wash:#FBF1E0; --warn-line:#EFD8B0;
+  --bad:#BE3B34; --bad-wash:#FBEBE9; --bad-line:#F1CFCC;
+  --neutral:#565C68; --neutral-wash:#EDEFF2;
+  --r:8px; --r-lg:12px; --r-xl:16px;
+  --shadow-sm:0 1px 2px rgba(20,22,28,.05);
+  --shadow:0 1px 2px rgba(20,22,28,.04), 0 10px 28px -18px rgba(20,22,28,.22);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{
-  font-family:"IBM Plex Sans",system-ui,sans-serif; color:var(--ink); background:var(--paper);
-  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
-}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif; color:var(--ink); background:var(--paper); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased}
 .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
-h1,h2,h3{margin:0; font-weight:600}
+h1,h2,h3{margin:0; font-weight:600; letter-spacing:-.01em}
 button{font-family:inherit}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:focus-visible{outline:2px solid var(--brand-2); outline-offset:2px; border-radius:4px}
 
 /* App bar */
-.appbar{
-  display:flex; align-items:center; gap:18px; height:56px; padding:0 20px;
-  background:var(--surface); border-bottom:1px solid var(--hair); position:sticky; top:0; z-index:20;
-}
-.brand{display:flex; align-items:center; gap:10px; font-weight:600; letter-spacing:-.01em}
-.brand .mark{
-  width:22px;height:22px;border-radius:6px;background:var(--brand);
-  display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700
-}
+.appbar{display:flex; align-items:center; gap:20px; height:58px; padding:0 22px; background:var(--surface); border-bottom:1px solid var(--hair); position:sticky; top:0; z-index:20}
+.brand{display:flex; align-items:center; gap:10px; font-weight:600}
+.brand .mark{width:23px;height:23px;border-radius:7px;background:var(--brand); display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
 .brand small{color:var(--faint); font-weight:500; letter-spacing:.02em}
 .appbar .spacer{flex:1}
 
+/* Primary nav */
+.pnav{display:inline-flex; gap:2px}
+.pnav button{border:0; background:transparent; color:var(--muted); font-weight:500; font-size:13.5px; padding:8px 13px; border-radius:8px; cursor:pointer; transition:.12s; position:relative}
+.pnav button:hover{color:var(--ink); background:var(--neutral-wash)}
+.pnav button[aria-current="page"]{color:var(--brand); background:var(--brand-wash)}
+
 /* Segmented control */
 .seg{display:inline-flex; background:var(--neutral-wash); border-radius:9px; padding:3px; gap:2px}
-.seg button{
-  border:0; background:transparent; color:var(--muted); font-weight:500; font-size:12.5px;
-  padding:5px 11px; border-radius:7px; cursor:pointer; transition:.12s
-}
+.seg button{border:0; background:transparent; color:var(--muted); font-weight:500; font-size:12.5px; padding:5px 11px; border-radius:7px; cursor:pointer; transition:.12s}
 .seg button:hover{color:var(--ink)}
-.seg button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 1px rgba(20,22,28,.06)}
+.seg button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm)}
 
-.btn{
-  display:inline-flex; align-items:center; gap:7px; border:1px solid var(--hair-strong); background:var(--surface);
-  color:var(--ink); font-weight:500; font-size:13px; padding:7px 13px; border-radius:8px; cursor:pointer; transition:.12s
-}
+.btn{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--hair-strong); background:var(--surface); color:var(--ink); font-weight:500; font-size:13px; padding:8px 14px; border-radius:9px; cursor:pointer; transition:.12s}
 .btn:hover{border-color:var(--brand-2); color:var(--brand)}
 .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
-.btn.primary:hover{background:#2d2c5c; color:#fff}
+.btn.primary:hover{background:#2c2b58; color:#fff; border-color:#2c2b58}
 .btn.ghost{border-color:transparent; background:transparent; color:var(--muted)}
 .btn.ghost:hover{background:var(--neutral-wash); color:var(--ink)}
+.btn:disabled{opacity:.5; cursor:default}
 
-/* Layout */
-.shell{display:grid; grid-template-columns: minmax(420px, 1fr) minmax(0, 1.05fr); gap:0; min-height:calc(100vh - 56px)}
-.master{border-right:1px solid var(--hair); padding:18px 18px 40px; min-width:0}
-.detail{padding:18px 20px 60px; min-width:0; background:var(--surface-2)}
-@media (max-width: 980px){
-  .shell{grid-template-columns:1fr}
-  .detail{border-top:1px solid var(--hair)}
-}
+.eyebrow{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); font-weight:600}
+[hidden]{display:none !important}
 
-.eyebrow{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); font-weight:600}
+/* ---- Fleet view ---- */
+.shell{display:grid; grid-template-columns: minmax(430px, 1fr) minmax(0, 1.04fr); min-height:calc(100vh - 58px)}
+.master{border-right:1px solid var(--hair); padding:20px 20px 48px; min-width:0}
+.detail{padding:20px 22px 64px; min-width:0; background:var(--surface-2)}
+@media (max-width: 1000px){ .shell{grid-template-columns:1fr} .detail{border-top:1px solid var(--hair)} }
 
-/* Triage strip */
-.triage{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0 16px}
-.stat{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:11px 13px}
+.masterhead{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+.triage{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0 18px}
+.stat{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:12px 14px}
 .stat .k{font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px}
-.stat .v{font-size:26px; font-weight:600; letter-spacing:-.02em; margin-top:2px; font-family:"IBM Plex Mono",monospace}
+.stat .v{font-size:27px; font-weight:600; letter-spacing:-.02em; margin-top:3px; font-family:"IBM Plex Mono",monospace; line-height:1}
 .stat.alarm .v{color:var(--bad)} .stat.warn .v{color:var(--warn)}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
 .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)} .dot.ok{background:var(--ok)} .dot.brand{background:var(--brand-2)}
 
-/* Fleet table */
-.panel-title{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px}
+.panel-title{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:9px}
 .panel-title h2{font-size:15px}
 .panel-title .hint{font-size:12px; color:var(--faint)}
-.table{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); overflow:hidden}
-.thead, .row{display:grid; grid-template-columns: 1.7fr 1.15fr 1.05fr .95fr .65fr; align-items:center}
-.thead{padding:9px 14px; border-bottom:1px solid var(--hair); background:var(--surface-2)}
-.thead span{font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); font-weight:600}
-.row{padding:11px 14px; border-bottom:1px solid var(--hair); cursor:pointer; transition:background .1s; position:relative}
+.table{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow-sm)}
+.thead, .row{display:grid; grid-template-columns: 1.7fr 1.15fr 1.05fr .95fr .62fr; align-items:center}
+.thead{padding:10px 15px; border-bottom:1px solid var(--hair); background:var(--surface-2)}
+.thead span{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:600}
+.row{padding:12px 15px; border-bottom:1px solid var(--hair); cursor:pointer; transition:background .1s; position:relative}
 .row:last-child{border-bottom:0}
 .row:hover{background:var(--surface-2)}
-.row:focus-visible{outline:2px solid var(--brand-2); outline-offset:-2px}
 .row[aria-selected="true"]{background:var(--brand-wash)}
 .row[aria-selected="true"]::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--brand)}
 .agentcell{display:flex; flex-direction:column; gap:2px; min-width:0}
 .agentcell .id{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:7px}
 .agentcell .tt{font-size:11.5px; color:var(--faint)}
-.flag{font-size:11px}
 .flag.bad{color:var(--bad)} .flag.warn{color:var(--warn)}
 
 /* Pills + badges */
@@ -112,275 +103,327 @@ button{font-family:inherit}
 .tier.full .sq{background:var(--ok)} .tier.spot .sq{background:var(--brand-2)}
 .tier.hil .sq{background:var(--warn)} .tier.blocked .sq{background:var(--bad)}
 
-/* Confidence meter */
-.meter{display:flex; align-items:center; gap:8px}
+.meter{display:inline-flex; align-items:center; gap:8px}
 .meter .track{width:52px; height:6px; border-radius:999px; background:var(--hair); overflow:hidden}
 .meter .fill{height:100%; border-radius:999px; background:var(--brand-2)}
 .meter.lo .fill{background:var(--warn)} .meter.ok .fill{background:var(--ok)}
 .meter .num{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted)}
-.trend{font-family:"IBM Plex Mono",monospace; font-size:12px; display:flex; align-items:center; gap:4px}
+.trend{font-family:"IBM Plex Mono",monospace; font-size:12px; display:inline-flex; align-items:center; gap:4px}
 .trend.up{color:var(--ok)} .trend.down{color:var(--bad)} .trend.flat{color:var(--faint)}
 
 /* Detail / drilldown */
-.empty{display:grid; place-items:center; height:60vh; text-align:center; color:var(--faint)}
-.empty .big{font-size:15px; color:var(--muted); margin-top:10px; max-width:280px}
-.dhead{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.empty{display:grid; place-items:center; min-height:58vh; text-align:center; color:var(--faint)}
+.empty .ic{font-size:30px;color:var(--hair-strong)}
+.empty .big{font-size:15px; color:var(--muted); margin-top:12px; max-width:300px; line-height:1.5}
+.dhead{display:flex; align-items:center; gap:12px; margin-bottom:16px}
 .dhead .back{display:none}
-@media (max-width:980px){ .dhead .back{display:inline-flex} }
-.dhead .id{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:18px}
+@media (max-width:1000px){ .dhead .back{display:inline-flex} }
+.dhead .id{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:19px}
 .dhead .meta{font-size:12px; color:var(--faint)}
 .dhead .spacer{flex:1}
 
 /* Spotlight (signature) */
-.spotlight{
-  border:1px solid #DBDAF0; background:linear-gradient(0deg,var(--brand-wash),var(--brand-wash));
-  border-radius:var(--r-lg); padding:16px 16px 14px; margin-bottom:14px; box-shadow:var(--shadow)
-}
+.spotlight{border:1px solid var(--brand-line); background:var(--brand-wash); border-radius:var(--r-lg); padding:0; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden}
+.spotlight .accent{height:3px; background:var(--brand)}
+.spotlight .inner{padding:16px 18px 16px}
 .spotlight .eyebrow{color:var(--brand)}
-.verdictline{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 14px}
-.verdictline .tier{font-size:13px}
-.bigpill{font-size:13px; font-weight:600; padding:5px 13px}
+.verdictline{display:flex; align-items:center; gap:11px; flex-wrap:wrap; margin:11px 0 16px}
+.verdictline .tier{font-size:13.5px}
+.bigpill{font-size:13.5px; font-weight:600; padding:6px 14px}
 .confwrap{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-left:auto}
-.confwrap .track{width:96px;height:8px}
-.chainlbl{font-size:11.5px; color:var(--muted); margin-bottom:8px}
-.chain{display:flex; align-items:stretch; gap:0; flex-wrap:wrap}
-.gate{
-  display:flex; flex-direction:column; gap:3px; padding:8px 12px; background:var(--surface);
-  border:1px solid var(--hair); position:relative; min-width:96px
-}
+.confwrap .track{width:100px;height:8px}
+.chainlbl{font-size:11.5px; color:var(--muted); margin-bottom:9px}
+.chain{display:flex; align-items:stretch; flex-wrap:wrap}
+.gate{display:flex; flex-direction:column; gap:3px; padding:9px 13px; background:var(--surface); border:1px solid var(--hair); position:relative; min-width:100px}
 .gate:first-child{border-radius:8px 0 0 8px} .gate:last-child{border-radius:0 8px 8px 0}
 .gate + .gate{border-left:0}
-.gate .gname{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted)}
-.gate .gval{font-size:12px; font-weight:500}
-.gate.pass .gval{color:var(--ok)} .gate.binding{background:#fff; border-color:var(--brand); z-index:1; box-shadow:0 0 0 1px var(--brand) inset}
+.gate .gname{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint)}
+.gate .gval{font-size:12.5px; font-weight:500}
+.gate.pass .gval{color:var(--ok)}
+.gate.binding{background:#fff; border-color:var(--brand); z-index:1; box-shadow:0 0 0 1px var(--brand) inset}
 .gate.binding .gname{color:var(--brand)} .gate.binding .gval{color:var(--brand)}
-.gate .arrow{position:absolute; right:-8px; top:50%; transform:translateY(-50%); z-index:2; color:var(--faint); font-size:11px; background:var(--brand-wash); padding:0 1px}
+.gate .arrow{position:absolute; right:-7px; top:50%; transform:translateY(-50%); z-index:2; color:var(--faint); font-size:11px; background:var(--brand-wash); padding:0 1px}
 .gate:last-child .arrow{display:none}
-.rationale{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.55}
-.driftbanner{
-  display:flex; align-items:center; gap:9px; background:var(--bad-wash); color:var(--bad);
-  border:1px solid #F1CFCC; border-radius:8px; padding:9px 12px; font-size:12.5px; margin:0 0 12px; font-weight:500
-}
-.driftbanner.warn{background:var(--warn-wash); color:var(--warn); border-color:#EFD8B0}
+.rationale{font-size:12.5px; color:var(--muted); margin-top:13px; line-height:1.55}
+.driftbanner{display:flex; align-items:center; gap:9px; background:var(--bad-wash); color:var(--bad); border:1px solid var(--bad-line); border-radius:8px; padding:10px 13px; font-size:12.5px; margin:0 0 12px; font-weight:500}
+.driftbanner.warn{background:var(--warn-wash); color:var(--warn); border-color:var(--warn-line)}
 
-/* Detail cards */
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-@media (max-width:560px){ .grid2{grid-template-columns:1fr} }
-.card{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:13px 15px; margin-bottom:12px}
-.card h3{font-size:13px; font-weight:600; margin-bottom:11px; display:flex; align-items:center; justify-content:space-between}
+@media (max-width:580px){ .grid2{grid-template-columns:1fr} }
+.card{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:14px 16px; margin-bottom:12px; box-shadow:var(--shadow-sm)}
+.card h3{font-size:13px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between}
 .card h3 .sub{font-weight:400; font-size:11.5px; color:var(--faint)}
-.crit{display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:12px}
+.crit{display:flex; align-items:center; gap:9px; margin-bottom:8px; font-size:12px}
 .crit:last-child{margin-bottom:0}
-.crit .lab{width:92px; color:var(--muted)}
+.crit .lab{width:94px; color:var(--muted)}
 .crit .bar{flex:1; height:6px; border-radius:999px; background:var(--hair); overflow:hidden}
 .crit .bar i{display:block; height:100%; background:var(--ink); border-radius:999px}
 .crit.safety .bar i{background:var(--ok)}
 .crit .val{font-family:"IBM Plex Mono",monospace; color:var(--muted); width:26px; text-align:right}
 .tiles{display:grid; grid-template-columns:1fr 1fr; gap:8px}
-.tile{background:var(--surface-2); border:1px solid var(--hair); border-radius:8px; padding:8px 10px}
-.tile .k{font-size:11px; color:var(--muted)} .tile .v{font-size:17px; font-weight:600; font-family:"IBM Plex Mono",monospace; margin-top:1px}
+.tile{background:var(--surface-2); border:1px solid var(--hair); border-radius:8px; padding:9px 11px}
+.tile .k{font-size:11px; color:var(--muted)} .tile .v{font-size:17px; font-weight:600; font-family:"IBM Plex Mono",monospace; margin-top:2px}
 .tile .v.bad{color:var(--bad)} .tile .v.warn{color:var(--warn)}
-.spark{display:flex; align-items:flex-end; gap:2px; height:34px; margin-top:10px}
-.spark i{flex:1; background:var(--brand-2); opacity:.35; border-radius:2px 2px 0 0; min-height:2px}
-.spark i.err{background:var(--bad); opacity:.8}
-.reviewtext{font-size:13px; line-height:1.6; color:var(--ink)}
+.spark{display:flex; align-items:flex-end; gap:2px; height:34px; margin-top:11px}
+.spark i{flex:1; background:var(--brand-2); opacity:.32; border-radius:2px 2px 0 0; min-height:2px}
+.spark i.err{background:var(--bad); opacity:.85}
+.reviewtext{font-size:13px; line-height:1.62; color:var(--ink)}
 .reviewtext b{font-weight:600}
-
-/* Policy simulator */
 .simrow{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
-.simout{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted)}
-.reasons{list-style:none; padding:0; margin:10px 0 0; font-size:12px; color:var(--muted)}
+.simout{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted)}
+.reasons{list-style:none; padding:0; margin:11px 0 0; font-size:12px; color:var(--muted)}
 .reasons li{display:flex; gap:8px; padding:3px 0}
 .reasons li::before{content:"—"; color:var(--faint)}
-
-/* Audit timeline */
 .timeline{position:relative; margin:2px 0 0 4px; padding-left:16px}
-.timeline::before{content:""; position:absolute; left:3px; top:4px; bottom:4px; width:1px; background:var(--hair-strong)}
+.timeline::before{content:""; position:absolute; left:3px; top:5px; bottom:5px; width:1px; background:var(--hair-strong)}
 .tl{position:relative; padding:5px 0; font-size:12.5px}
 .tl::before{content:""; position:absolute; left:-16px; top:9px; width:7px;height:7px;border-radius:50%; background:var(--brand-2); box-shadow:0 0 0 3px var(--surface)}
 .tl .t{font-family:"IBM Plex Mono",monospace; color:var(--faint); font-size:11px}
 .tl .a{color:var(--ink)}
 
-/* Routing modal */
-.scrim{position:fixed; inset:0; background:rgba(20,22,28,.42); display:grid; place-items:start center; padding:8vh 16px; z-index:40}
-.modal{background:var(--surface); border-radius:14px; width:min(560px,100%); box-shadow:0 24px 60px -20px rgba(20,22,28,.5); overflow:hidden}
-.modal header{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--hair)}
-.modal .body{padding:16px}
-.winner{display:flex; align-items:center; gap:12px; background:var(--ok-wash); border:1px solid #BFE3CE; border-radius:10px; padding:12px 14px; margin-bottom:12px}
-.winner .id{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:16px; color:var(--ok)}
-.rank{display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid var(--hair); border-radius:8px; margin-bottom:6px; font-size:12.5px}
-.rank.inel{opacity:.55}
-.rank .sid{font-family:"IBM Plex Mono",monospace}
-[hidden]{display:none !important}
+/* ---- Routing & KPI views: centered column ---- */
+.page{max-width:860px; margin:0 auto; padding:28px 22px 64px}
+.page > .eyebrow{margin-bottom:6px}
+.page h1{font-size:21px; margin-bottom:6px}
+.page .lede{color:var(--muted); font-size:13.5px; margin-bottom:22px; max-width:60ch}
+
+.routebar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:14px 16px; margin-bottom:18px; box-shadow:var(--shadow-sm)}
+.routebar .lab{font-size:12.5px; color:var(--muted)}
+.decision-card{border:1px solid var(--ok-line); background:var(--ok-wash); border-radius:var(--r-lg); padding:0; overflow:hidden; margin-bottom:16px; box-shadow:var(--shadow)}
+.decision-card.none{border-color:var(--warn-line); background:var(--warn-wash)}
+.decision-card .accent{height:3px; background:var(--ok)}
+.decision-card.none .accent{background:var(--warn)}
+.decision-card .body{padding:16px 18px}
+.dc-top{display:flex; align-items:center; gap:13px; flex-wrap:wrap}
+.dc-chosen{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ok); font-weight:600}
+.decision-card.none .dc-chosen{color:var(--warn)}
+.dc-id{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:20px; color:var(--ok)}
+.decision-card.none .dc-id{color:var(--warn)}
+.dc-meta{display:flex; gap:16px; margin-left:auto; font-size:12px; color:var(--muted)}
+.dc-meta b{font-family:"IBM Plex Mono",monospace; color:var(--ink); font-weight:600}
+.dc-rationale{font-size:12.5px; color:var(--muted); margin-top:11px; line-height:1.5}
+
+.ranktable{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow-sm)}
+.ranktable .rh, .ranktable .rr{display:grid; grid-template-columns: 28px 1.5fr 1.4fr 1fr 1fr 1fr; align-items:center; gap:8px; padding:10px 15px}
+.ranktable .rh{background:var(--surface-2); border-bottom:1px solid var(--hair); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); font-weight:600}
+.ranktable .rr{border-bottom:1px solid var(--hair); font-size:13px}
+.ranktable .rr:last-child{border-bottom:0}
+.ranktable .rr.inel{opacity:.62}
+.ranktable .rr.win{background:var(--ok-wash)}
+.rank-num{font-family:"IBM Plex Mono",monospace; color:var(--faint); font-size:12px}
+.rank-id{font-family:"IBM Plex Mono",monospace; font-weight:600}
+.scorebar{display:flex; align-items:center; gap:8px}
+.scorebar .track{flex:1; height:6px; border-radius:999px; background:var(--hair); overflow:hidden; max-width:90px}
+.scorebar .fill{height:100%; background:var(--brand-2); border-radius:999px}
+.scorebar .n{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted)}
+.cell-mono{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted)}
+
+/* KPI */
+.kpi-controls{display:flex; gap:16px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--hair); border-radius:var(--r-lg); padding:14px 16px; margin-bottom:22px; box-shadow:var(--shadow-sm)}
+.kpi-field{display:flex; flex-direction:column; gap:5px}
+.kpi-field label{font-size:11.5px; color:var(--muted)}
+.kpi-field input{width:130px; padding:7px 10px; border:1px solid var(--hair-strong); border-radius:8px; font-family:"IBM Plex Mono",monospace; font-size:13px}
+.kpi-field input:focus{outline:none; border-color:var(--brand-2); box-shadow:0 0 0 3px var(--brand-wash)}
+.kpi-section{margin-bottom:24px}
+.kpi-section .sec-h{display:flex; align-items:baseline; gap:10px; margin-bottom:4px}
+.kpi-section .sec-h h2{font-size:15px}
+.kpi-section .sec-sub{font-size:12px; color:var(--faint)}
+.kpi-group{font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:600; margin:14px 0 8px}
+.kpi-row{display:grid; grid-template-columns: 1.6fr 1.5fr 96px; align-items:center; gap:14px; padding:11px 15px; background:var(--surface); border:1px solid var(--hair); border-radius:10px; margin-bottom:7px; box-shadow:var(--shadow-sm)}
+.kpi-row .metric{font-size:13px; font-weight:500}
+.kpi-row .note{font-size:11.5px; color:var(--faint); margin-top:2px; line-height:1.4}
+.kpi-prog{display:flex; flex-direction:column; gap:5px}
+.kpi-prog .bar{position:relative; height:7px; border-radius:999px; background:var(--hair); overflow:visible}
+.kpi-prog .bar i{position:absolute; left:0; top:0; height:7px; border-radius:999px; background:var(--ok)}
+.kpi-prog .bar i.miss{background:var(--warn)}
+.kpi-prog .marker{position:absolute; top:-3px; width:2px; height:13px; background:var(--ink); opacity:.5}
+.kpi-prog .scale{display:flex; justify-content:space-between; font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--faint)}
+.kpi-val{text-align:right; font-family:"IBM Plex Mono",monospace}
+.kpi-val .a{font-size:16px; font-weight:600}
+.kpi-val .a.met{color:var(--ok)} .kpi-val .a.miss{color:var(--warn)} .kpi-val .a.pending{color:var(--faint)}
+.kpi-val .t{font-size:11px; color:var(--faint)}
+.kpi-value-row{display:grid; grid-template-columns: 1.6fr 1fr 1fr 110px; align-items:center; gap:12px; padding:11px 15px; background:var(--surface); border:1px solid var(--hair); border-radius:10px; margin-bottom:7px; box-shadow:var(--shadow-sm); font-size:13px}
+.kpi-value-row .ba{font-family:"IBM Plex Mono",monospace; color:var(--muted)}
+.kpi-value-row .imp{justify-self:end}
+
+.skel{background:linear-gradient(90deg,var(--hair) 25%,var(--hair-strong) 37%,var(--hair) 63%); background-size:400% 100%; border-radius:8px; height:14px}
 @media (prefers-reduced-motion:no-preference){
-  .detail-inner{animation:fade .18s ease}
+  .view-anim{animation:fade .2s ease}
+  .skel{animation:sh 1.2s ease infinite}
   @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+  @keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
 }
+
+/* modal scrim for admin */
+.scrim{position:fixed; inset:0; background:rgba(20,22,28,.42); display:grid; place-items:start center; padding:9vh 16px; z-index:40}
+.modal{background:var(--surface); border-radius:14px; width:min(460px,100%); box-shadow:0 24px 60px -20px rgba(20,22,28,.5); overflow:hidden}
+.modal header{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--hair)}
+.modal .body{padding:16px; font-size:13px; color:var(--muted); line-height:1.55}
 </style>
 </head>
 <body>
 <header class="appbar">
   <div class="brand"><span class="mark">▣</span> Agent Workforce Governance <small class="mono">/ console</small></div>
-  <div class="seg" id="taskfilter" role="group" aria-label="Filter by task type">
-    <button data-tt="all" aria-pressed="true">All</button>
-    <button data-tt="rag_qa">RAG QA</button>
-    <button data-tt="summarization">Summarization</button>
-    <button data-tt="translation">Translation</button>
-  </div>
+  <nav class="pnav" id="pnav" aria-label="Primary">
+    <button data-view="fleet" aria-current="page">Fleet</button>
+    <button data-view="routing">Routing</button>
+    <button data-view="kpis">KPIs</button>
+  </nav>
   <div class="spacer"></div>
-  <button class="btn primary" id="routebtn"><span>▸</span> Route a task</button>
   <button class="btn ghost" id="adminbtn" title="Demo controls" aria-label="Demo controls">⋯</button>
 </header>
 
-<main class="shell">
-  <section class="master" aria-label="Fleet">
-    <div class="eyebrow">Fleet status</div>
-    <div class="triage" id="triage"></div>
-
-    <div class="panel-title">
-      <h2>Fleet</h2>
-      <span class="hint">each row is one agent · its columns are the governance outputs</span>
-    </div>
-    <div class="table" role="grid" aria-label="Agents and their governance decisions">
-      <div class="thead" role="row">
-        <span role="columnheader">Agent</span>
-        <span role="columnheader">Autonomy tier</span>
-        <span role="columnheader">Verdict</span>
-        <span role="columnheader">Confidence</span>
-        <span role="columnheader">Trend</span>
+<!-- FLEET -->
+<main class="view" id="view-fleet">
+  <div class="shell">
+    <section class="master" aria-label="Fleet">
+      <div class="masterhead">
+        <div class="eyebrow">Fleet status</div>
+        <div class="seg" id="taskfilter" role="group" aria-label="Filter by task type">
+          <button data-tt="all" aria-pressed="true">All</button>
+          <button data-tt="rag_qa">RAG</button>
+          <button data-tt="summarization">Summ.</button>
+          <button data-tt="translation">Trans.</button>
+        </div>
       </div>
-      <div id="rows"></div>
-    </div>
-  </section>
-
-  <section class="detail" aria-label="Agent detail" id="detail"></section>
+      <div class="triage" id="triage"></div>
+      <div class="panel-title">
+        <h2>Fleet</h2>
+        <span class="hint">each row is one agent · its columns are the governance outputs</span>
+      </div>
+      <div class="table" role="grid" aria-label="Agents and their governance decisions">
+        <div class="thead" role="row">
+          <span role="columnheader">Agent</span>
+          <span role="columnheader">Autonomy tier</span>
+          <span role="columnheader">Verdict</span>
+          <span role="columnheader">Confidence</span>
+          <span role="columnheader">Trend</span>
+        </div>
+        <div id="rows"></div>
+      </div>
+    </section>
+    <section class="detail" aria-label="Agent detail" id="detail"></section>
+  </div>
 </main>
 
-<div class="scrim" id="routemodal" hidden></div>
+<!-- ROUTING -->
+<main class="view" id="view-routing" hidden>
+  <div class="page view-anim">
+    <div class="eyebrow">Task routing</div>
+    <h1>Which agent should get the next task?</h1>
+    <p class="lede">Pick a task type and route it. The router ranks every agent by measured competence on that task — then reliability, cost, and latency — and gates the pick. Ineligible agents (below the pass-rate floor) are shown but never chosen.</p>
+    <div class="routebar">
+      <span class="lab">Route a</span>
+      <div class="seg" id="routetask" role="group" aria-label="Task type to route">
+        <button data-tt="rag_qa" aria-pressed="true">RAG QA</button>
+        <button data-tt="summarization" aria-pressed="false">Summarization</button>
+        <button data-tt="translation" aria-pressed="false">Translation</button>
+      </div>
+      <span class="lab">task</span>
+      <button class="btn primary" id="dorouting" style="margin-left:auto">Route next task</button>
+    </div>
+    <div id="routeout"></div>
+  </div>
+</main>
+
+<!-- KPIS -->
+<main class="view" id="view-kpis" hidden>
+  <div class="page view-anim">
+    <div class="eyebrow">Platform &amp; agent KPIs</div>
+    <h1>Is the platform good — and is the fleet?</h1>
+    <p class="lede">Two questions, kept separate. Platform KPIs ask whether the governance system itself is trustworthy and worth it. Agent KPIs are what the platform measures about the managed fleet.</p>
+    <div class="kpi-controls">
+      <div class="kpi-field"><label for="hm">Human minutes / item</label><input id="hm" type="number" min="0.5" max="60" step="0.5" value="4"></div>
+      <div class="kpi-field"><label for="hc">Loaded labeling cost ($/hr)</label><input id="hc" type="number" min="1" max="500" step="5" value="40"></div>
+      <div style="margin-left:auto; align-self:flex-end"><button class="btn" id="dlreport">Download report (.md)</button></div>
+    </div>
+    <div id="kpiout"></div>
+  </div>
+</main>
+
+<div class="scrim" id="adminmodal" hidden></div>
 
 <script>
-/* ---------- Mock data: mirrors the backend schemas ----------
-   AgentPerformance + AutonomyDecision + engine.resolve() Decision shapes.
-   Flip API_BASE to e.g. "http://localhost:8000" to wire to the FastAPI service.
-   (The resolved decision spotlight expects a /decision endpoint exposing
-   engine.resolve(); see the note printed in console.) */
+/* ---------- Wiring ----------
+   Flip API_BASE to "http://localhost:8000" to run against FastAPI.
+   Live: fleet ← /decisions+/performance+/agents+/audit, spotlight ← /decision,
+   routing ← POST /route, kpis ← /kpi, review ← /review/{id}.
+   Mock fallback keeps this file fully usable standalone. */
 const API_BASE = null;
 
 const CRITS = ["correctness","faithfulness","completeness","coherence","safety"];
 const TIER_LABEL = {full_auto:"Full auto", auto_spot_check:"Auto + spot check", human_in_loop:"Human in the loop", blocked:"Blocked"};
 const TIER_CLASS = {full_auto:"full", auto_spot_check:"spot", human_in_loop:"hil", blocked:"blocked"};
+const TT_LABEL = {rag_qa:"RAG QA", summarization:"Summarization", translation:"Translation"};
 
-function spark(base, errAt){ return Array.from({length:18},(_,i)=>({v: Math.max(0.1, base + Math.sin(i/2)*0.12 + (Math.random()-0.5)*0.08), err: errAt && errAt.includes(i)})); }
+function spark(base, errAt){ return Array.from({length:18},(_,i)=>({v:Math.max(0.1, base+Math.sin(i/2)*0.12+(Math.random()-0.5)*0.08), err: errAt && errAt.includes(i)})); }
 
+/* ---------- Mock fleet (mirrors backend schemas) ---------- */
 const MOCK_AGENTS = [
   { id:"rag_strong", task_type:"rag_qa", model:"gpt-4o", n_evals:142, n_signals:30,
-    tier:"full_auto", allow:true, requires_approval:false, confidence:0.88, trend:0.3,
-    pass_rate:0.94, avg_score:4.5, drift:null,
+    tier:"full_auto", allow:true, requires_approval:false, confidence:0.88, trend:0.3, pass_rate:0.94, avg_score:4.5, cost:0.011, latency:2.1, drift:null,
     crit:{correctness:4.6,faithfulness:4.4,completeness:4.0,coherence:4.5,safety:4.8},
-    ops:{uptime:0.994,error_rate:0.006,p95:2.1,refusal:0.012,tool_success:0.98,retry:0.03},
+    ops:{uptime:0.994,error_rate:0.006,p95:2.1,refusal:0.012},
     precedence:[["safety","ok"],["drift","none"],["autonomy","full_auto"],["policy","allow"]], binding:2,
     rationale:"Pass rate 94% clears the full-auto band (≥90%) with 142 evals — above the trust threshold. Confidence 0.88 holds the promotion; no active drift.",
-    review:"<b>Strong RAG performer.</b> Consistent across criteria, anchored by safety (4.8) and correctness (4.6). Completeness (4.0) is the soft spot — occasionally trims supporting detail. Trend is improving (+0.3). Recommended autonomy: full auto.",
-    signals: spark(0.85), audit:[
-      ["10:42","routed task #8821 — selected as top eligible agent"],
-      ["09:15","autonomy recalibrated → full_auto (confidence 0.88)"],
-      ["08:03","policy evaluated — high-risk task escalated to human"]]},
-
+    review:"<b>Strong RAG performer.</b> Consistent across criteria, anchored by safety (4.8) and correctness (4.6). Completeness (4.0) is the soft spot. Trend is improving (+0.3). Recommended autonomy: full auto.",
+    signals:spark(0.85), audit:[["10:42","routed task #8821 — selected as top eligible agent"],["09:15","autonomy recalibrated → full_auto (confidence 0.88)"],["08:03","policy evaluated — high-risk task escalated to human"]]},
   { id:"rag_weak", task_type:"rag_qa", model:"llama-3-8b", n_evals:96, n_signals:30,
-    tier:"blocked", allow:false, requires_approval:false, confidence:0.71, trend:-0.9,
-    pass_rate:0.61, avg_score:3.1, drift:{level:"bad", text:"Safety incident detected — recent run flagged unsafe output"},
+    tier:"blocked", allow:false, requires_approval:false, confidence:0.71, trend:-0.9, pass_rate:0.61, avg_score:3.1, cost:0.002, latency:3.4, drift:{level:"bad", text:"Safety incident detected — recent run flagged unsafe output"},
     crit:{correctness:3.2,faithfulness:2.6,completeness:3.4,coherence:3.6,safety:2.4},
-    ops:{uptime:0.97,error_rate:0.041,p95:3.4,refusal:0.02,tool_success:0.9,retry:0.11},
+    ops:{uptime:0.97,error_rate:0.041,p95:3.4,refusal:0.02},
     precedence:[["safety","blocked"],["drift","active"],["autonomy","blocked"],["policy","block"]], binding:0,
     rationale:"Safety score 2.4 is below the block floor (3.0) and a safety flag fired this period. Safety is the first gate in precedence, so it hard-blocks regardless of other scores.",
-    review:"<b>Blocked on safety.</b> Faithfulness (2.6) and safety (2.4) both breach floors — this agent hallucinates and produced an unsafe output. Sharp negative trend (−0.9) after the recent model config. Recommended autonomy: blocked until remediated.",
-    signals: spark(0.55,[12,14,15,17]), audit:[
-      ["11:20","BLOCKED by autonomy calibration — safety floor breached"],
-      ["11:19","drift alert raised — safety_incident"],
-      ["10:50","review generated — faithfulness below block floor"]]},
-
+    review:"<b>Blocked on safety.</b> Faithfulness (2.6) and safety (2.4) both breach floors. Sharp negative trend (−0.9) after the recent config. Recommended autonomy: blocked until remediated.",
+    signals:spark(0.55,[12,14,15,17]), audit:[["11:20","BLOCKED by autonomy calibration — safety floor breached"],["11:19","drift alert raised — safety_incident"],["10:50","review generated — faithfulness below block floor"]]},
   { id:"sum_strong", task_type:"summarization", model:"gpt-4o-mini", n_evals:120, n_signals:30,
-    tier:"auto_spot_check", allow:true, requires_approval:false, confidence:0.64, trend:0.0,
-    pass_rate:0.86, avg_score:4.1, drift:null,
+    tier:"auto_spot_check", allow:true, requires_approval:false, confidence:0.64, trend:0.0, pass_rate:0.86, avg_score:4.1, cost:0.003, latency:1.6, drift:null,
     crit:{correctness:4.2,faithfulness:4.3,completeness:3.8,coherence:4.4,safety:4.6},
-    ops:{uptime:0.992,error_rate:0.009,p95:1.6,refusal:0.008,tool_success:0.99,retry:0.02},
+    ops:{uptime:0.992,error_rate:0.009,p95:1.6,refusal:0.008},
     precedence:[["safety","ok"],["drift","none"],["autonomy","auto_spot_check"],["policy","allow"]], binding:2,
     rationale:"Pass rate 86% lands in the spot-check band (80–90%). Avg score 4.1 is just under the promote-to-full threshold, so it acts but outputs are randomly sampled.",
-    review:"<b>Reliable, not yet trusted for full auto.</b> Even profile with good faithfulness (4.3). Completeness (3.8) keeps it a notch below promotion. Flat trend. Recommended autonomy: auto with spot checks.",
-    signals: spark(0.8), audit:[
-      ["10:05","spot-check sampled output #4410 — passed"],
-      ["09:40","autonomy held at auto_spot_check (confidence 0.64)"]]},
-
+    review:"<b>Reliable, not yet trusted for full auto.</b> Even profile with good faithfulness (4.3). Completeness (3.8) keeps it a notch below promotion. Recommended autonomy: auto with spot checks.",
+    signals:spark(0.8), audit:[["10:05","spot-check sampled output #4410 — passed"],["09:40","autonomy held at auto_spot_check (confidence 0.64)"]]},
   { id:"sum_weak", task_type:"summarization", model:"mistral-7b", n_evals:88, n_signals:30,
-    tier:"human_in_loop", allow:true, requires_approval:true, confidence:0.41, trend:-0.4,
-    pass_rate:0.72, avg_score:3.5, drift:{level:"warn", text:"Latency drift — p95 trending up ~3× over the window"},
+    tier:"human_in_loop", allow:true, requires_approval:true, confidence:0.41, trend:-0.4, pass_rate:0.72, avg_score:3.5, cost:0.001, latency:5.8, drift:{level:"warn", text:"Latency drift — p95 trending up ~3× over the window"},
     crit:{correctness:3.6,faithfulness:3.4,completeness:3.2,coherence:3.8,safety:4.1},
-    ops:{uptime:0.985,error_rate:0.02,p95:5.8,refusal:0.03,tool_success:0.95,retry:0.09},
+    ops:{uptime:0.985,error_rate:0.02,p95:5.8,refusal:0.03},
     precedence:[["safety","ok"],["drift","active"],["autonomy","human_in_loop"],["policy","approval"]], binding:3,
     rationale:"Pass rate 72% sits in the human-in-loop band (60–80%). Latency drift is active, so promotion is suppressed and every output requires approval before use.",
-    review:"<b>Needs a human in the loop.</b> Middling quality (avg 3.5) and a latency regression (p95 5.8s, ~3× up). Declining trend (−0.4). Recommended autonomy: human-in-the-loop; investigate latency.",
-    signals: spark(0.65), audit:[
-      ["10:30","output #5120 awaiting human approval"],
-      ["10:12","drift alert raised — latency_multiplier 3.0"],
-      ["09:55","autonomy capped at human_in_loop"]]},
-
+    review:"<b>Needs a human in the loop.</b> Middling quality (avg 3.5) and a latency regression (p95 5.8s). Declining trend (−0.4). Recommended autonomy: human-in-the-loop; investigate latency.",
+    signals:spark(0.65), audit:[["10:30","output #5120 awaiting human approval"],["10:12","drift alert raised — latency_multiplier 3.0"],["09:55","autonomy capped at human_in_loop"]]},
   { id:"trans_strong", task_type:"translation", model:"gpt-4o", n_evals:134, n_signals:30,
-    tier:"full_auto", allow:true, requires_approval:false, confidence:0.79, trend:0.1,
-    pass_rate:0.91, avg_score:4.4, drift:null,
+    tier:"full_auto", allow:true, requires_approval:false, confidence:0.79, trend:0.1, pass_rate:0.91, avg_score:4.4, cost:0.011, latency:1.9, drift:null,
     crit:{correctness:4.5,faithfulness:4.6,completeness:4.2,coherence:4.4,safety:4.7},
-    ops:{uptime:0.996,error_rate:0.004,p95:1.9,refusal:0.006,tool_success:0.99,retry:0.02},
+    ops:{uptime:0.996,error_rate:0.004,p95:1.9,refusal:0.006},
     precedence:[["safety","ok"],["drift","none"],["autonomy","full_auto"],["policy","allow"]], binding:2,
     rationale:"Pass rate 91% clears the full-auto band with strong faithfulness (4.6). Confidence 0.79 clears the promotion threshold; no drift active.",
-    review:"<b>Top translator.</b> High faithfulness (4.6) and safety (4.7) — accurate and clean. Slight positive trend. Recommended autonomy: full auto.",
-    signals: spark(0.86), audit:[
-      ["09:58","routed task #7740 — selected as top eligible agent"],
-      ["09:20","autonomy recalibrated → full_auto (confidence 0.79)"]]},
-
+    review:"<b>Top translator.</b> High faithfulness (4.6) and safety (4.7). Slight positive trend. Recommended autonomy: full auto.",
+    signals:spark(0.86), audit:[["09:58","routed task #7740 — selected as top eligible agent"],["09:20","autonomy recalibrated → full_auto (confidence 0.79)"]]},
   { id:"trans_weak", task_type:"translation", model:"opus-mt", n_evals:34, n_signals:14,
-    tier:"human_in_loop", allow:true, requires_approval:true, confidence:0.38, trend:-0.1,
-    pass_rate:0.83, avg_score:3.9, drift:null,
+    tier:"human_in_loop", allow:true, requires_approval:true, confidence:0.38, trend:-0.1, pass_rate:0.83, avg_score:3.9, cost:0.0005, latency:1.2, drift:null,
     crit:{correctness:3.9,faithfulness:3.7,completeness:3.8,coherence:4.0,safety:4.3},
-    ops:{uptime:0.99,error_rate:0.012,p95:1.2,refusal:0.01,tool_success:0.97,retry:0.04},
+    ops:{uptime:0.99,error_rate:0.012,p95:1.2,refusal:0.01},
     precedence:[["safety","ok"],["drift","none"],["autonomy","capped"],["policy","approval"]], binding:2,
     rationale:"Quality would earn spot-check (pass 83%), but only 34 evals — below the trust threshold (≥50). Evidence gating caps it at human-in-the-loop until it proves out.",
     review:"<b>Promising but unproven.</b> Decent scores, yet only 34 evals — not enough evidence to grant autonomy. Recommended autonomy: human-in-the-loop until sample size grows.",
-    signals: spark(0.78), audit:[
-      ["08:44","autonomy capped — insufficient evidence (34 evals)"],
-      ["08:30","review generated — recommend more sampling"]]},
+    signals:spark(0.78), audit:[["08:44","autonomy capped — insufficient evidence (34 evals)"],["08:30","review generated — recommend more sampling"]]},
 ];
-
 let AGENTS = MOCK_AGENTS;
 
-/* ---------- Live data adapter (used when API_BASE is set) ----------
-   Maps the FastAPI shapes (/agents, /performance, /decisions, /audit,
-   /review) onto the view-model the renderers already expect, so the UI
-   code is identical whether data is mock or live. */
-function synthSignals(err){
-  return Array.from({length:18},(_,i)=>({v:0.7+Math.sin(i/2)*0.1, err: Math.random()<err}));
-}
+/* ---------- Live adapter ---------- */
+function synthSignals(err){ return Array.from({length:18},(_,i)=>({v:0.7+Math.sin(i/2)*0.1, err: Math.random()<err})); }
 function deriveGates(dec, perf){
-  const alerts = dec.drift_alerts || [];
-  const prec = dec.precedence || [];
+  const alerts = dec.drift_alerts||[], prec = dec.precedence||[];
   const safetyBlocked = dec.tier==="blocked" && /safety/i.test(dec.rationale||"");
-  const gates = [
-    ["safety", safetyBlocked ? "blocked" : "ok"],
-    ["drift", alerts.length ? "active" : "none"],
-    ["autonomy", dec.tier],
-    ["policy", dec.allow ? (dec.requires_approval ? "approval" : "allow") : "block"],
-  ];
-  let binding = 2;
-  if(safetyBlocked) binding = 0;
-  else if(alerts.length && prec.includes("drift_detected")) binding = 1;
-  else if(prec.includes("low_confidence_cap") || prec.includes("insufficient_data")) binding = 2;
-  else if(dec.allow && dec.requires_approval) binding = 3;
-  return {gates, binding};
+  const gates = [["safety", safetyBlocked?"blocked":"ok"],["drift", alerts.length?"active":"none"],["autonomy", dec.tier],["policy", dec.allow?(dec.requires_approval?"approval":"allow"):"block"]];
+  let b=2; if(safetyBlocked)b=0; else if(alerts.length&&prec.includes("drift_detected"))b=1; else if(prec.includes("low_confidence_cap")||prec.includes("insufficient_data"))b=2; else if(dec.allow&&dec.requires_approval)b=3;
+  return {gates, binding:b};
 }
 async function loadLive(){
   const base = API_BASE.replace(/\/$/,"");
   const j = u => fetch(base+u).then(r=>{ if(!r.ok) throw new Error(u+" "+r.status); return r.json(); });
-  const [agents, perfs, decs, audit] = await Promise.all([
-    j("/agents"), j("/performance"), j("/decisions"), j("/audit?limit=300").catch(()=>[]),
-  ]);
+  const [agents, perfs, decs, audit] = await Promise.all([j("/agents"), j("/performance"), j("/decisions"), j("/audit?limit=300").catch(()=>[])]);
   const meta={}, perfById={}, auditBy={};
   agents.forEach(a=>meta[a.agent_id]={model:a.model, task_type:a.task_type});
   perfs.forEach(p=>perfById[p.agent_id]=p);
@@ -388,156 +431,89 @@ async function loadLive(){
   return decs.map(d=>{
     const id=d.subject, p=perfById[id]||{}, m=meta[id]||{}, c=p.per_criterion_avg||d.criteria||{};
     const {gates,binding}=deriveGates(d,p);
-    const drift = (d.drift_alerts&&d.drift_alerts.length)
-      ? {level:d.tier==="blocked"?"bad":"warn", text:d.drift_alerts.map(a=>a.message||a.kind||"drift detected").join(" · ")}
-      : null;
+    const drift = (d.drift_alerts&&d.drift_alerts.length)?{level:d.tier==="blocked"?"bad":"warn", text:d.drift_alerts.map(a=>a.message||a.kind||"drift detected").join(" · ")}:null;
     const aud = (auditBy[id]||[]).slice(0,6).map(r=>[(r.ts||"").slice(11,16), r.action]);
-    return {
-      id, task_type:m.task_type||p.task_type||"", model:m.model||"",
-      n_evals:p.n_evals||0, n_signals:p.n_signals||0,
-      tier:d.tier, allow:d.allow, requires_approval:d.requires_approval,
-      confidence:d.confidence, trend:p.trend||0, pass_rate:p.pass_rate||0, avg_score:p.avg_score||0, drift,
+    return { id, task_type:m.task_type||p.task_type||"", model:m.model||"", n_evals:p.n_evals||0, n_signals:p.n_signals||0,
+      tier:d.tier, allow:d.allow, requires_approval:d.requires_approval, confidence:d.confidence, trend:p.trend||0,
+      pass_rate:p.pass_rate||0, avg_score:p.avg_score||0, cost:p.avg_cost_usd||0, latency:p.avg_latency_s||p.p95_latency_s||0, drift,
       crit:{correctness:c.correctness||0,faithfulness:c.faithfulness||0,completeness:c.completeness||0,coherence:c.coherence||0,safety:c.safety||0},
-      ops:{uptime:p.uptime??1, error_rate:p.error_rate??0, p95:p.p95_latency_s??0, refusal:p.refusal_rate??0, tool_success:p.tool_success_rate??1, retry:p.retry_rate??0},
-      precedence:gates, binding, rationale:d.rationale||"",
-      review:null, signals:synthSignals(p.error_rate??0),
-      audit:aud.length?aud:[["—","no audit entries yet"]],
-    };
+      ops:{uptime:p.uptime??1, error_rate:p.error_rate??0, p95:p.p95_latency_s??0, refusal:p.refusal_rate??0},
+      precedence:gates, binding, rationale:d.rationale||"", review:null, signals:synthSignals(p.error_rate??0),
+      audit:aud.length?aud:[["—","no audit entries yet"]] };
   });
 }
 
 /* ---------- State ---------- */
-const state = { filter:"all", selectedId:null, risk:"low" };
-
-/* ---------- Helpers ---------- */
+const state = { view:"fleet", filter:"all", selectedId:null, risk:"low", routeTask:"rag_qa", routeResult:null, routeLoading:false, kpi:null, kpiLoading:false };
 const $ = s => document.querySelector(s);
-function verdict(a){
-  if(!a.allow) return {cls:"bad", gly:"✕", label:"Block"};
-  if(a.requires_approval) return {cls:"warn", gly:"◐", label:"Approval"};
-  return {cls:"ok", gly:"✓", label:"Allow"};
-}
-function trendEl(t){
-  const cls = t>0.05?"up":t<-0.05?"down":"flat";
-  const gly = cls==="up"?"↗":cls==="down"?"↘":"–";
-  const sign = t>0?"+":"";
-  return `<span class="trend ${cls}">${gly} ${sign}${t.toFixed(1)}</span>`;
-}
-function confMeter(c, w){
-  const cls = c>=0.75?"ok":c>=0.5?"":"lo";
-  return `<span class="meter ${cls}"><span class="track"><span class="fill" style="width:${Math.round(c*100)}%"></span></span><span class="num">${c.toFixed(2)}</span></span>`;
-}
+
+/* ---------- Shared helpers ---------- */
+function verdict(a){ if(!a.allow) return {cls:"bad",gly:"✕",label:"Block"}; if(a.requires_approval) return {cls:"warn",gly:"◐",label:"Approval"}; return {cls:"ok",gly:"✓",label:"Allow"}; }
+function trendEl(t){ const cls=t>0.05?"up":t<-0.05?"down":"flat"; const gly=cls==="up"?"↗":cls==="down"?"↘":"–"; return `<span class="trend ${cls}">${gly} ${t>0?"+":""}${t.toFixed(1)}</span>`; }
+function confMeter(c){ const cls=c>=0.75?"ok":c>=0.5?"":"lo"; return `<span class="meter ${cls}"><span class="track"><span class="fill" style="width:${Math.round(c*100)}%"></span></span><span class="num">${c.toFixed(2)}</span></span>`; }
 function filtered(){ return state.filter==="all"?AGENTS:AGENTS.filter(a=>a.task_type===state.filter); }
 
-/* ---------- Render: triage ---------- */
+/* ---------- Fleet: triage + rows ---------- */
 function renderTriage(){
-  const f = filtered();
-  const blocked = f.filter(a=>a.tier==="blocked").length;
-  const drifting = f.filter(a=>a.drift).length;
-  const approval = f.filter(a=>a.requires_approval).length;
+  const f=filtered();
+  const blocked=f.filter(a=>a.tier==="blocked").length, drifting=f.filter(a=>a.drift).length, approval=f.filter(a=>a.requires_approval).length;
   $("#triage").innerHTML = `
     <div class="stat"><div class="k"><span class="dot brand"></span>Agents</div><div class="v">${f.length}</div></div>
     <div class="stat ${blocked?'alarm':''}"><div class="k"><span class="dot bad"></span>Blocked</div><div class="v">${blocked}</div></div>
     <div class="stat ${drifting?'warn':''}"><div class="k"><span class="dot warn"></span>Drifting</div><div class="v">${drifting}</div></div>
     <div class="stat"><div class="k"><span class="dot ok"></span>Need approval</div><div class="v">${approval}</div></div>`;
 }
-
-/* ---------- Render: fleet rows ---------- */
 function renderRows(){
-  const rows = filtered().map(a=>{
-    const v = verdict(a); const tc = TIER_CLASS[a.tier];
-    const flag = a.drift ? `<span class="flag ${a.drift.level}">${a.drift.level==='bad'?'⚠':'⚠'}</span>` : "";
-    const conf = a.tier==="blocked" ? `<span class="num mono" style="font-size:11.5px;color:var(--faint)">safety floor</span>` : confMeter(a.confidence);
+  $("#rows").innerHTML = filtered().map(a=>{
+    const v=verdict(a), tc=TIER_CLASS[a.tier];
+    const flag = a.drift ? `<span class="flag ${a.drift.level}">⚠</span>` : "";
+    const conf = a.tier==="blocked" ? `<span class="mono" style="font-size:11.5px;color:var(--faint)">safety floor</span>` : confMeter(a.confidence);
     return `<div class="row" role="row" tabindex="0" data-id="${a.id}" aria-selected="${state.selectedId===a.id}">
-      <div class="agentcell">
-        <span class="id">${a.id} ${flag}</span>
-        <span class="tt">${a.task_type} · ${a.model}</span>
-      </div>
+      <div class="agentcell"><span class="id">${a.id} ${flag}</span><span class="tt">${a.task_type} · ${a.model}</span></div>
       <div><span class="tier ${tc}"><span class="sq"></span>${TIER_LABEL[a.tier]}</span></div>
       <div><span class="pill ${v.cls}"><span class="gly">${v.gly}</span>${v.label}</span></div>
       <div>${conf}</div>
-      <div>${trendEl(a.trend)}</div>
-    </div>`;
+      <div>${trendEl(a.trend)}</div></div>`;
   }).join("");
-  $("#rows").innerHTML = rows;
 }
 
-/* ---------- Render: detail / drilldown ---------- */
+/* ---------- Fleet: drilldown ---------- */
 function policyResult(a, risk){
-  // mirrors governance/policy.decide()
-  let allow = a.allow, approval = a.requires_approval, reasons = [];
-  if(a.tier==="blocked"){ return {cls:"bad", gly:"✕", label:"Block", reasons:["Agent is blocked by autonomy calibration."]}; }
+  let allow=a.allow, approval=a.requires_approval, reasons=[];
+  if(a.tier==="blocked") return {cls:"bad",gly:"✕",label:"Block",reasons:["Agent is blocked by autonomy calibration."]};
   if(a.tier==="human_in_loop"){ approval=true; reasons.push("Agent is human-in-the-loop; output requires approval before use."); }
-  else if(a.tier==="auto_spot_check"){ reasons.push("Agent may act, but outputs are subject to random spot checks."); }
-  else { reasons.push("Agent is trusted for full autonomy."); }
+  else if(a.tier==="auto_spot_check") reasons.push("Agent may act, but outputs are subject to random spot checks.");
+  else reasons.push("Agent is trusted for full autonomy.");
   if(risk==="high" && allow){ approval=true; reasons.push("High-risk task: human approval required by policy."); }
-  if(risk==="medium" && a.tier==="auto_spot_check"){ reasons.push("Medium risk on a spot-check agent: sampling rate increased."); }
-  const r = !allow ? {cls:"bad",gly:"✕",label:"Block"} : approval ? {cls:"warn",gly:"◐",label:"Requires approval"} : {cls:"ok",gly:"✓",label:"Allow"};
-  r.reasons = reasons; return r;
+  if(risk==="medium" && a.tier==="auto_spot_check") reasons.push("Medium risk on a spot-check agent: sampling rate increased.");
+  const r = !allow?{cls:"bad",gly:"✕",label:"Block"}:approval?{cls:"warn",gly:"◐",label:"Requires approval"}:{cls:"ok",gly:"✓",label:"Allow"};
+  r.reasons=reasons; return r;
 }
-
 function renderDetail(){
-  const a = AGENTS.find(x=>x.id===state.selectedId);
-  const el = $("#detail");
-  if(!a){
-    el.innerHTML = `<div class="empty"><div>
-      <div style="font-size:30px;color:var(--hair-strong)">▣</div>
-      <div class="big">Select an agent to see its resolved decision — and the reasoning behind it.</div>
-    </div></div>`;
-    return;
-  }
+  const a=AGENTS.find(x=>x.id===state.selectedId), el=$("#detail");
+  if(!a){ el.innerHTML=`<div class="empty"><div><div class="ic">▣</div><div class="big">Select an agent to see its resolved decision — and the reasoning behind it.</div></div></div>`; return; }
   if(API_BASE && a.review===null && !a._reviewLoading){
-    a._reviewLoading = true;
-    fetch(API_BASE.replace(/\/$/,"")+"/review/"+a.id)
-      .then(r=>r.ok?r.json():null)
-      .then(j=>{ a.review = (j&&j.narrative) || "No review available."; if(state.selectedId===a.id) renderDetail(); })
-      .catch(()=>{ a.review = "Review unavailable."; });
+    a._reviewLoading=true;
+    fetch(API_BASE.replace(/\/$/,"")+"/review/"+a.id).then(r=>r.ok?r.json():null)
+      .then(j=>{ a.review=(j&&j.narrative)||"No review available."; if(state.selectedId===a.id) renderDetail(); })
+      .catch(()=>{ a.review="Review unavailable."; });
   }
-  const reviewHtml = a.review || (API_BASE ? "Generating review…" : "");
-
-  const v = verdict(a);
-  const bigVerdict = !a.allow ? {cls:"bad",gly:"✕",label:"Block"} : a.requires_approval ? {cls:"warn",gly:"◐",label:"Requires approval"} : {cls:"ok",gly:"✓",label:"Allow"};
-  const drift = a.drift ? `<div class="driftbanner ${a.drift.level==='bad'?'':'warn'}">⚠ ${a.drift.text}</div>` : "";
-
-  const chain = a.precedence.map((g,i)=>{
-    const [name,val] = g;
-    const pass = ["ok","none","allow","full_auto"].includes(val);
-    const binding = i===a.binding;
-    return `<div class="gate ${pass?'pass':''} ${binding?'binding':''}">
-      <span class="gname">${name}</span><span class="gval">${val}</span>
-      <span class="arrow">▸</span></div>`;
-  }).join("");
-
-  const crit = CRITS.map(c=>{
-    const val = a.crit[c]; const pct = (val/5)*100;
-    return `<div class="crit ${c==='safety'?'safety':''}"><span class="lab">${c}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="val">${val.toFixed(1)}</span></div>`;
-  }).join("");
-
-  const tiles = [
-    ["uptime", (a.ops.uptime*100).toFixed(1)+"%", ""],
-    ["error rate", (a.ops.error_rate*100).toFixed(1)+"%", a.ops.error_rate>0.03?"bad":""],
-    ["p95 latency", a.ops.p95.toFixed(1)+"s", a.ops.p95>4?"warn":""],
-    ["refusals", (a.ops.refusal*100).toFixed(1)+"%", ""],
-  ].map(([k,val,cls])=>`<div class="tile"><div class="k">${k}</div><div class="v ${cls}">${val}</div></div>`).join("");
-
+  const reviewHtml = a.review || (API_BASE?"Generating review…":"");
+  const bigVerdict = !a.allow?{cls:"bad",gly:"✕",label:"Block"}:a.requires_approval?{cls:"warn",gly:"◐",label:"Requires approval"}:{cls:"ok",gly:"✓",label:"Allow"};
+  const drift = a.drift?`<div class="driftbanner ${a.drift.level==='bad'?'':'warn'}">⚠ ${a.drift.text}</div>`:"";
+  const chain = a.precedence.map((g,i)=>{ const [name,val]=g; const pass=["ok","none","allow","full_auto"].includes(val); const binding=i===a.binding;
+    return `<div class="gate ${pass?'pass':''} ${binding?'binding':''}"><span class="gname">${name}</span><span class="gval">${val}</span><span class="arrow">▸</span></div>`; }).join("");
+  const crit = CRITS.map(c=>{ const val=a.crit[c]; return `<div class="crit ${c==='safety'?'safety':''}"><span class="lab">${c}</span><span class="bar"><i style="width:${(val/5)*100}%"></i></span><span class="val">${val.toFixed(1)}</span></div>`; }).join("");
+  const tiles = [["uptime",(a.ops.uptime*100).toFixed(1)+"%",""],["error rate",(a.ops.error_rate*100).toFixed(1)+"%",a.ops.error_rate>0.03?"bad":""],["p95 latency",a.ops.p95.toFixed(1)+"s",a.ops.p95>4?"warn":""],["refusals",(a.ops.refusal*100).toFixed(1)+"%",""]]
+    .map(([k,val,cls])=>`<div class="tile"><div class="k">${k}</div><div class="v ${cls}">${val}</div></div>`).join("");
   const sparkBars = a.signals.map(s=>`<i class="${s.err?'err':''}" style="height:${Math.round(s.v*100)}%"></i>`).join("");
-
   const pr = policyResult(a, state.risk);
   const reasons = pr.reasons.map(r=>`<li>${r}</li>`).join("");
-
   const audit = a.audit.map(([t,txt])=>`<div class="tl"><div class="t">${t}</div><div class="a">${txt}</div></div>`).join("");
-
-  el.innerHTML = `<div class="detail-inner">
-    <div class="dhead">
-      <button class="btn ghost back" id="backbtn">←</button>
-      <span class="id">${a.id}</span>
-      <span class="meta">${a.task_type} · ${a.model}</span>
-      <span class="spacer"></span>
-      <span class="meta mono">${a.n_evals} evals · ${a.n_signals} signals</span>
-    </div>
-
+  el.innerHTML = `<div class="view-anim">
+    <div class="dhead"><button class="btn ghost back" id="backbtn">←</button><span class="id">${a.id}</span><span class="meta">${a.task_type} · ${a.model}</span><span class="spacer"></span><span class="meta mono">${a.n_evals} evals · ${a.n_signals} signals</span></div>
     ${drift}
-
-    <div class="spotlight">
+    <div class="spotlight"><div class="accent"></div><div class="inner">
       <div class="eyebrow">Resolved decision</div>
       <div class="verdictline">
         <span class="tier ${TIER_CLASS[a.tier]}"><span class="sq"></span>${TIER_LABEL[a.tier]}</span>
@@ -547,104 +523,200 @@ function renderDetail(){
       <div class="chainlbl">Why — precedence chain <span style="color:var(--faint)">(the highlighted gate is binding)</span></div>
       <div class="chain">${chain}</div>
       <div class="rationale">${a.rationale}</div>
-    </div>
-
+    </div></div>
     <div class="grid2">
-      <div class="card">
-        <h3>Scorecard <span class="sub">per criterion · /5</span></h3>
-        ${crit}
-        <div style="margin-top:10px; font-size:12px; color:var(--muted)">Pass rate <b class="mono">${(a.pass_rate*100).toFixed(0)}%</b> · avg <b class="mono">${a.avg_score.toFixed(1)}</b> · trend ${trendEl(a.trend)}</div>
-      </div>
-      <div class="card">
-        <h3>Operations <span class="sub">runtime signals</span></h3>
-        <div class="tiles">${tiles}</div>
-        <div class="spark" aria-hidden="true">${sparkBars}</div>
-        <div style="font-size:11px;color:var(--faint);margin-top:4px">success per run · red = error</div>
-      </div>
+      <div class="card"><h3>Scorecard <span class="sub">per criterion · /5</span></h3>${crit}
+        <div style="margin-top:11px;font-size:12px;color:var(--muted)">Pass rate <b class="mono">${(a.pass_rate*100).toFixed(0)}%</b> · avg <b class="mono">${a.avg_score.toFixed(1)}</b> · trend ${trendEl(a.trend)}</div></div>
+      <div class="card"><h3>Operations <span class="sub">runtime signals</span></h3><div class="tiles">${tiles}</div>
+        <div class="spark" aria-hidden="true">${sparkBars}</div><div style="font-size:11px;color:var(--faint);margin-top:5px">success per run · red = error</div></div>
     </div>
-
-    <div class="card">
-      <h3>Performance review <span class="sub">auto-generated</span></h3>
-      <div class="reviewtext">${reviewHtml}</div>
-    </div>
-
-    <div class="card">
-      <h3>Policy simulator</h3>
-      <div class="simrow">
-        <span style="font-size:12.5px;color:var(--muted)">If this agent gets a task of risk:</span>
+    <div class="card"><h3>Performance review <span class="sub">auto-generated</span></h3><div class="reviewtext">${reviewHtml}</div></div>
+    <div class="card"><h3>Policy simulator</h3>
+      <div class="simrow"><span style="font-size:12.5px;color:var(--muted)">If this agent gets a task of risk:</span>
         <div class="seg" id="risksim" role="group" aria-label="Task risk">
           <button data-risk="low" aria-pressed="${state.risk==='low'}">low</button>
           <button data-risk="medium" aria-pressed="${state.risk==='medium'}">medium</button>
-          <button data-risk="high" aria-pressed="${state.risk==='high'}">high</button>
-        </div>
-        <span class="simout">→ <span class="pill ${pr.cls}"><span class="gly">${pr.gly}</span>${pr.label}</span></span>
-      </div>
-      <ul class="reasons">${reasons}</ul>
-    </div>
-
-    <div class="card">
-      <h3>Audit trail <span class="sub">this agent</span></h3>
-      <div class="timeline">${audit}</div>
-    </div>
+          <button data-risk="high" aria-pressed="${state.risk==='high'}">high</button></div>
+        <span class="simout">→ <span class="pill ${pr.cls}"><span class="gly">${pr.gly}</span>${pr.label}</span></span></div>
+      <ul class="reasons">${reasons}</ul></div>
+    <div class="card"><h3>Audit trail <span class="sub">this agent</span></h3><div class="timeline">${audit}</div></div>
   </div>`;
 }
 
-/* ---------- Routing modal ---------- */
-function openRoute(){
-  const tt = state.filter==="all" ? "rag_qa" : state.filter;
-  const pool = AGENTS.filter(a=>a.task_type===tt);
-  const ranked = pool.map(a=>({id:a.id, score:+(a.avg_score*(a.allow?1:0.5)).toFixed(2), eligible:a.allow && a.pass_rate>=0.8, pass:a.pass_rate, avg:a.avg_score}))
-                     .sort((x,y)=>(y.eligible-x.eligible)||(y.score-x.score));
-  const winner = ranked.find(r=>r.eligible);
-  const rankHtml = ranked.map(r=>`<div class="rank ${r.eligible?'':'inel'}">
-    <span class="sid">${r.id}</span>
-    <span>${r.eligible?'eligible':'ineligible'} · pass ${(r.pass*100).toFixed(0)}% · avg ${r.avg.toFixed(1)} · <b class="mono">score ${r.score}</b></span></div>`).join("");
-  $("#routemodal").innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Route a task">
-    <header><strong>Route next ${tt} task</strong><button class="btn ghost" id="closeroute" aria-label="Close">✕</button></header>
-    <div class="body">
-      ${winner ? `<div class="winner"><span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ok)">Chosen</span><span class="id">${winner.id}</span><span style="font-size:12px;color:var(--muted)">top eligible by competence on ${tt}</span></div>`
-               : `<div class="winner" style="background:var(--warn-wash);border-color:#EFD8B0"><span class="id" style="color:var(--warn)">No eligible agent</span><span style="font-size:12px;color:var(--muted)">escalate to a human</span></div>`}
-      <div style="font-size:11.5px;color:var(--faint);margin:4px 0 6px;text-transform:uppercase;letter-spacing:.06em">Ranking</div>
-      ${rankHtml}
-    </div></div>`;
-  $("#routemodal").hidden = false;
+/* ---------- Routing ---------- */
+function mockRoute(tt){
+  const pool = MOCK_AGENTS.filter(a=>a.task_type===tt);
+  const ranking = pool.map(a=>({ agent_id:a.id, score:+(a.avg_score/5*(a.allow?1:0.6)).toFixed(3), pass_rate:a.pass_rate, avg_score:a.avg_score, avg_cost_usd:a.cost, avg_latency_s:a.latency, eligible:a.allow && a.pass_rate>=0.8, note:a.allow?"":"below floor" }))
+    .sort((x,y)=>(y.eligible-x.eligible)||(y.score-x.score));
+  const winner = ranking.find(r=>r.eligible);
+  return { task_type:tt, chosen_agent:winner?winner.agent_id:null, ranking,
+    rationale: winner?`Selected ${winner.agent_id}: highest competence on ${TT_LABEL[tt]} among eligible agents (pass ${(winner.pass_rate*100).toFixed(0)}%, avg ${winner.avg_score.toFixed(1)}), balanced against cost and latency.`:"No eligible agent met the minimum pass rate; escalate to a human." };
+}
+async function doRoute(){
+  state.routeLoading=true; renderRouting();
+  try{
+    if(API_BASE){ const base=API_BASE.replace(/\/$/,""); const r=await fetch(base+"/route?task_type="+state.routeTask,{method:"POST"}); state.routeResult = await r.json(); }
+    else { await new Promise(r=>setTimeout(r,260)); state.routeResult = mockRoute(state.routeTask); }
+  }catch(e){ state.routeResult = mockRoute(state.routeTask); }
+  state.routeLoading=false; renderRouting();
+}
+function renderRouting(){
+  const out=$("#routeout");
+  if(state.routeLoading){ out.innerHTML=`<div class="decision-card" style="background:var(--surface);border-color:var(--hair)"><div class="body"><div class="skel" style="width:40%;height:20px;margin-bottom:10px"></div><div class="skel" style="width:80%"></div></div></div>`; return; }
+  const d=state.routeResult; if(!d){ out.innerHTML=`<div class="empty" style="min-height:30vh"><div><div class="ic">▸</div><div class="big">Choose a task type and route it to see the decision.</div></div></div>`; return; }
+  const win = d.chosen_agent ? (d.ranking.find(r=>r.agent_id===d.chosen_agent)||{}) : null;
+  const card = win
+    ? `<div class="decision-card view-anim"><div class="accent"></div><div class="body">
+         <div class="dc-top"><span class="dc-chosen">Chosen</span><span class="dc-id">${d.chosen_agent}</span>
+           <span class="dc-meta"><span>pass <b>${(win.pass_rate*100).toFixed(0)}%</b></span><span>avg <b>${(win.avg_score||0).toFixed(1)}</b></span><span>cost <b>$${(win.avg_cost_usd||0).toFixed(4)}</b></span><span>p95 <b>${(win.avg_latency_s||0).toFixed(1)}s</b></span></span></div>
+         <div class="dc-rationale">${d.rationale}</div></div></div>`
+    : `<div class="decision-card none view-anim"><div class="accent"></div><div class="body">
+         <div class="dc-top"><span class="dc-chosen">No eligible agent</span><span class="dc-id">escalate to human</span></div>
+         <div class="dc-rationale">${d.rationale}</div></div></div>`;
+  const maxScore = Math.max(...d.ranking.map(r=>r.score), 0.001);
+  const rows = d.ranking.map((r,i)=>`<div class="rr ${r.agent_id===d.chosen_agent?'win':''} ${r.eligible?'':'inel'}">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-id">${r.agent_id}</span>
+      <span class="scorebar"><span class="track"><span class="fill" style="width:${Math.max(0,Math.round(r.score/maxScore*100))}%"></span></span><span class="n">${r.score.toFixed(2)}</span></span>
+      <span class="cell-mono">${(r.pass_rate*100).toFixed(0)}%</span>
+      <span class="cell-mono">$${(r.avg_cost_usd||0).toFixed(4)}</span>
+      <span>${r.eligible?`<span class="pill ok"><span class="gly">✓</span>eligible</span>`:`<span class="pill neutral">ineligible</span>`}</span></div>`).join("");
+  out.innerHTML = card + `<div class="ranktable view-anim">
+      <div class="rh"><span>#</span><span>Agent</span><span>Composite score</span><span>Pass</span><span>Cost/item</span><span>Status</span></div>${rows}</div>`;
+}
+
+/* ---------- KPIs ---------- */
+const MOCK_KPI = {
+  platform:{ performance:[
+    {metric:"Accuracy (judge vs human pass/fail)",target:">= 80%",achieved:"86%",basis:"measured",note:"agreement of judge verdicts with human gold labels"},
+    {metric:"Cohen's kappa (judge vs human)",target:">= 0.60",achieved:"0.68",basis:"measured",note:"chance-corrected agreement; >=0.6 is 'substantial'"},
+    {metric:"Judge latency / item",target:"<= 8.0s",achieved:"5.4s",basis:"measured",note:"panel evaluation wall-clock per item"},
+    {metric:"False-allow rate",target:"< 5%",achieved:"3%",basis:"measured",note:"unsafe outputs the judge passed"},
+    {metric:"Coverage (criteria scored)",target:">= 95%",achieved:"100%",basis:"measured",note:"items with all five criteria scored"} ],
+    value:[
+    {metric:"Fleet inference cost / task (routing)",baseline:"6.25 idx",after:"2.33 idx",improvement:"-63%",basis:"estimated",note:"route-to-cheapest-good-enough vs always-strong"},
+    {metric:"Human review minutes saved / 100 items",baseline:"400 min",after:"120 min",improvement:"-70%",basis:"estimated",note:"full-auto + spot-check vs review-all"},
+    {metric:"Judge cost / item (cascade)",baseline:"$0.012",after:"$0.005",improvement:"-58%",basis:"measured",note:"cheap-first cascade vs full panel"} ]},
+  agents:{ quality:[
+    {metric:"Correctness (fleet avg)",target:">= 4.0",achieved:"3.69",basis:"measured",note:"strong 4.68; weak 2.26"},
+    {metric:"Faithfulness (fleet avg)",target:">= 4.0",achieved:"3.75",basis:"measured",note:"strong 4.77; weak 2.31"},
+    {metric:"Completeness (fleet avg)",target:">= 3.8",achieved:"3.71",basis:"measured",note:""},
+    {metric:"Coherence (fleet avg)",target:">= 4.0",achieved:"4.12",basis:"measured",note:""},
+    {metric:"Safety (fleet avg)",target:">= 4.5",achieved:"4.31",basis:"measured",note:"one agent below floor (blocked)"} ],
+    reliability:[
+    {metric:"Uptime (fleet operations)",target:">= 99%",achieved:"92%",basis:"measured",note:"successful executions / total run_signals"},
+    {metric:"Error rate (fleet operations)",target:"< 5%",achieved:"8%",basis:"measured",note:"failed executions / total run_signals"},
+    {metric:"p95 latency (fleet)",target:"<= 3.0s",achieved:"3.4s",basis:"measured",note:"95th percentile across agents"},
+    {metric:"Tool success rate",target:">= 95%",achieved:"96%",basis:"measured",note:""} ]},
+  assumptions:{human_minutes:4.0, hourly_cost:40.0}
+};
+function parseNum(s){ if(s==null) return null; const m=String(s).replace(/,/g,'').match(/-?\d+(\.\d+)?/); return m?parseFloat(m[0]):null; }
+function kpiProgress(target, achieved){
+  if(achieved==null || /n\/a/i.test(achieved)) return {state:"pending"};
+  const a=parseNum(achieved), t=parseNum(target);
+  if(a==null||t==null) return {state:"pending"};
+  const lt = /</.test(target||"");
+  const met = lt ? a < t : a >= t;
+  const fill = lt ? Math.min(1, a/(t*2)) : Math.min(1, a/t);
+  const markerPos = lt ? 0.5 : 1.0;
+  return {state: met?"met":"miss", fill, markerPos, lt, a, t};
+}
+function kpiRow(r){
+  const p = kpiProgress(r.target, r.achieved);
+  let prog;
+  if(p.state==="pending"){ prog=`<div class="kpi-prog"><div class="bar"></div><div class="scale"><span>—</span><span>target ${r.target}</span></div></div>`; }
+  else { prog=`<div class="kpi-prog"><div class="bar"><i class="${p.state==='miss'?'miss':''}" style="width:${Math.round(p.fill*100)}%"></i><span class="marker" style="left:${Math.round(p.markerPos*100)}%"></span></div><div class="scale"><span>0</span><span>target ${r.target}</span></div></div>`; }
+  const aClass = p.state==="met"?"met":p.state==="miss"?"miss":"pending";
+  return `<div class="kpi-row"><div><div class="metric">${r.metric}</div>${r.note?`<div class="note">${r.note}</div>`:""}</div>
+    ${prog}
+    <div class="kpi-val"><div class="a ${aClass}">${r.achieved}</div><div class="t">target ${r.target}</div></div></div>`;
+}
+function kpiValueRow(r){
+  const neg = /-/.test(r.improvement||"");
+  return `<div class="kpi-value-row"><div><div class="metric">${r.metric}</div>${r.note?`<div class="note">${r.note}</div>`:""}</div>
+    <span class="ba">${r.baseline}</span><span class="ba">→ ${r.after}</span>
+    <span class="imp"><span class="pill ${neg?'ok':'neutral'}">${r.improvement}</span></span></div>`;
+}
+function renderKpis(){
+  const out=$("#kpiout");
+  if(state.kpiLoading){ out.innerHTML=Array.from({length:4}).map(()=>`<div class="kpi-row"><div class="skel" style="width:60%"></div><div class="skel"></div><div class="skel" style="width:60px;justify-self:end"></div></div>`).join(""); return; }
+  const k=state.kpi; if(!k){ return; }
+  out.innerHTML = `
+    <div class="kpi-section view-anim">
+      <div class="sec-h"><h2>Platform KPIs</h2><span class="sec-sub">is the governance system itself trustworthy and worth it?</span></div>
+      <div class="kpi-group">Judge trustworthiness &amp; efficiency</div>
+      ${k.platform.performance.map(kpiRow).join("")}
+      <div class="kpi-group">Platform value</div>
+      ${k.platform.value.map(kpiValueRow).join("")}
+    </div>
+    <div class="kpi-section view-anim">
+      <div class="sec-h"><h2>Agent KPIs</h2><span class="sec-sub">what the platform measures about the managed fleet</span></div>
+      <div class="kpi-group">Output quality (per criterion)</div>
+      ${k.agents.quality.map(kpiRow).join("")}
+      <div class="kpi-group">Runtime reliability</div>
+      ${k.agents.reliability.map(kpiRow).join("")}
+    </div>`;
+}
+async function loadKpis(){
+  state.kpiLoading=true; renderKpis();
+  const hm=parseFloat($("#hm").value)||4, hc=parseFloat($("#hc").value)||40;
+  try{
+    if(API_BASE){ const base=API_BASE.replace(/\/$/,""); state.kpi = await fetch(`${base}/kpi?human_minutes=${hm}&hourly_cost=${hc}`).then(r=>r.json()); }
+    else { await new Promise(r=>setTimeout(r,220)); state.kpi = MOCK_KPI; }
+  }catch(e){ state.kpi = MOCK_KPI; }
+  state.kpiLoading=false; renderKpis();
+}
+
+/* ---------- View switching ---------- */
+function setView(v){
+  state.view=v;
+  ["fleet","routing","kpis"].forEach(name=>{ $("#view-"+name).hidden = name!==v; });
+  [...document.querySelectorAll("#pnav button")].forEach(b=>b.setAttribute("aria-current", b.dataset.view===v?"page":"false"));
+  if(v==="routing" && !state.routeResult && !state.routeLoading) renderRouting();
+  if(v==="kpis" && !state.kpi && !state.kpiLoading) loadKpis();
 }
 
 /* ---------- Events ---------- */
 function selectAgent(id){ state.selectedId=id; state.risk="low"; renderRows(); renderDetail(); }
-
 document.addEventListener("click", e=>{
-  const row = e.target.closest(".row");
-  if(row){ selectAgent(row.dataset.id); return; }
-  const tf = e.target.closest("#taskfilter button");
-  if(tf){
-    state.filter=tf.dataset.tt;
-    [...document.querySelectorAll("#taskfilter button")].forEach(b=>b.setAttribute("aria-pressed", b===tf));
-    const stillVisible = filtered().some(a=>a.id===state.selectedId);
-    if(!stillVisible) state.selectedId=null;
-    renderTriage(); renderRows(); renderDetail(); return;
-  }
-  const rs = e.target.closest("#risksim button");
-  if(rs){ state.risk=rs.dataset.risk; renderDetail(); return; }
+  const nav=e.target.closest("#pnav button"); if(nav){ setView(nav.dataset.view); return; }
+  const row=e.target.closest(".row"); if(row){ selectAgent(row.dataset.id); return; }
+  const tf=e.target.closest("#taskfilter button");
+  if(tf){ state.filter=tf.dataset.tt; [...document.querySelectorAll("#taskfilter button")].forEach(b=>b.setAttribute("aria-pressed", b===tf));
+    if(!filtered().some(a=>a.id===state.selectedId)) state.selectedId=null; renderTriage(); renderRows(); renderDetail(); return; }
+  const rt=e.target.closest("#routetask button");
+  if(rt){ state.routeTask=rt.dataset.tt; [...document.querySelectorAll("#routetask button")].forEach(b=>b.setAttribute("aria-pressed", b===rt)); state.routeResult=null; renderRouting(); return; }
+  if(e.target.closest("#dorouting")){ doRoute(); return; }
+  const rs=e.target.closest("#risksim button"); if(rs){ state.risk=rs.dataset.risk; renderDetail(); return; }
   if(e.target.closest("#backbtn")){ state.selectedId=null; renderRows(); renderDetail(); return; }
-  if(e.target.closest("#routebtn")){ openRoute(); return; }
-  if(e.target.closest("#closeroute") || e.target.id==="routemodal"){ $("#routemodal").hidden=true; return; }
-  if(e.target.closest("#adminbtn")){ alert("Demo controls (seed data · simulate runtime) live here, separated from primary navigation."); return; }
+  if(e.target.closest("#dlreport")){ downloadReport(); return; }
+  if(e.target.closest("#adminbtn")){ openAdmin(); return; }
+  if(e.target.closest("#closeadmin") || e.target.id==="adminmodal"){ $("#adminmodal").hidden=true; return; }
 });
 document.addEventListener("keydown", e=>{
-  const row = e.target.closest(".row");
-  if(row && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); selectAgent(row.dataset.id); }
-  if(e.key==="Escape"){ $("#routemodal").hidden=true; }
+  const row=e.target.closest(".row"); if(row && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); selectAgent(row.dataset.id); }
+  if(e.key==="Escape"){ $("#adminmodal").hidden=true; }
 });
+document.addEventListener("change", e=>{ if(e.target.id==="hm"||e.target.id==="hc") loadKpis(); });
+
+function openAdmin(){
+  $("#adminmodal").innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Demo controls">
+    <header><strong>Demo controls</strong><button class="btn ghost" id="closeadmin" aria-label="Close">✕</button></header>
+    <div class="body">Seed data and simulate runtime live here — separated from primary navigation so destructive demo actions never sit next to real governance views.<br><br>
+    In live mode these map to <span class="mono">seed_demo_data()</span> and <span class="mono">simulate_runtime()</span>.</div></div>`;
+  $("#adminmodal").hidden=false;
+}
+function downloadReport(){
+  const md = (state.kpi && state.kpi.markdown) ? state.kpi.markdown : "# KPI report\n\n(Run in live mode to generate the full markdown report from the backend.)\n";
+  const blob=new Blob([md],{type:"text/markdown"}); const u=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=u; a.download="kpi_report.md"; a.click(); URL.revokeObjectURL(u);
+}
 
 /* ---------- Init ---------- */
 async function bootstrap(){
-  if(API_BASE){
-    try { AGENTS = await loadLive(); }
-    catch(e){ console.error("Live load failed — falling back to mock data.", e); AGENTS = MOCK_AGENTS; }
-  }
+  if(API_BASE){ try{ AGENTS=await loadLive(); }catch(e){ console.error("Live load failed — using mock.", e); AGENTS=MOCK_AGENTS; } }
   renderTriage(); renderRows(); renderDetail();
-  if(API_BASE){ console.info("Live mode →", API_BASE, "\nSpotlight is driven by GET /decision + /decisions (engine.resolve). Policy simulator mirrors policy.decide() client-side for responsiveness."); }
+  if(API_BASE) console.info("Live mode →", API_BASE);
 }
 bootstrap();
 </script>
