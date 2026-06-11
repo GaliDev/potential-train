@@ -146,7 +146,7 @@ flowchart TD
     Store --> Signals
     Policy --> Effects["Effects: gate next agent call / write decisions back (e.g. Langfuse)"]
     Effects -. feedback loop .-> Fleet
-    Bench --> UI["FastAPI + Streamlit (Operations tab)"]
+    Bench --> UI["FastAPI + web console (single-page GUI)"]
     Policy --> UI
     Review --> UI
     Drift --> UI
@@ -162,8 +162,8 @@ flowchart TD
 | Data models | Pydantic | Structured LLM outputs and typed DTOs, incl. `ExecutionTrace` telemetry |
 | Performance store | SQLite via SQLModel | Zero-setup system of record: `evals` (quality) + `run_signals` (operations) + audit |
 | Metrics | pandas, scipy, scikit-learn | Kappa, Spearman, precision/recall |
-| API | FastAPI | Lightweight service surface |
-| Dashboard | Streamlit | Fast, demo-friendly UI with a dedicated Operations tab |
+| API | FastAPI | Lightweight service surface; also serves the web console |
+| Console (GUI) | Static single-page app (HTML/CSS/JS) served by FastAPI | Zero build step, same-origin, demo-friendly UI |
 
 ## 4. Implementation
 
@@ -292,9 +292,7 @@ PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 # Render the Technical + Business + operational KPI report
 PYTHONPATH=src python -m evaluation.kpi_report
 
-# Explore the dashboard (works offline via "Seed demo data" / "Simulate runtime")
-PYTHONPATH=src streamlit run app/ui.py
-
-# Or run the API
+# Launch the GUI + API (FastAPI serves the web console at http://localhost:8000;
+# works offline via the "⋯" menu → "Seed data" / "Simulate runtime")
 PYTHONPATH=src uvicorn app.api:app --reload
 ```

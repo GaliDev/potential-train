@@ -2,8 +2,8 @@
 
 This is the production-shaped counterpart to `demo_seed.py`: it spends real
 LLM calls to have each managed fleet agent answer benchmark tasks, then runs
-the panel judge over those outputs with `persist=True` so Streamlit can read
-the resulting SQLite rows.
+the panel judge over those outputs with `persist=True` so the web console can
+read the resulting SQLite rows.
 
 Run with:
 
@@ -166,7 +166,7 @@ def _parse_task_type(value: str) -> TaskType | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Populate the Streamlit dashboard with real fleet evaluation data."
+        description="Populate the web console with real fleet evaluation data."
     )
     parser.add_argument(
         "--task-type",

@@ -30,7 +30,7 @@ performance reviews have visible quality differences.
 | Performance store| SQLite via SQLModel             |
 | Metrics          | pandas, scipy, scikit-learn     |
 | API              | FastAPI                         |
-| Dashboard        | Streamlit                       |
+| Console (GUI)    | Static SPA served by FastAPI    |
 
 ## Project layout
 
@@ -49,8 +49,8 @@ src/eval_harness/
   calibration.py       # bias mitigation + thresholds
   metrics.py           # kappa / Spearman / accuracy vs gold
 evaluation/benchmark.py # agreement metrics + report
-app/api.py             # FastAPI endpoints
-app/ui.py              # Streamlit dashboard
+app/api.py             # FastAPI endpoints + serves the web console
+app/web/index.html     # web console (single-page GUI)
 data/gold/             # curated hand-labeled gold set (tracked)
 data/public/           # cached public eval slices (gitignored)
 data/runs/             # generated run results (gitignored)
@@ -82,10 +82,8 @@ PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 # (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env)
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
 
-# Dashboard (works offline via the "Seed demo data" button)
-PYTHONPATH=src streamlit run app/ui.py
-
-# API
+# GUI + API: FastAPI serves the web console at http://localhost:8000
+# (works offline via the "⋯" menu → "Seed data")
 PYTHONPATH=src uvicorn app.api:app --reload
 
 # Tests (offline, no API key needed)
@@ -211,7 +209,7 @@ PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --no-persist
 
 Results land in three places: `data/runs/run_panel_<timestamp>.json` (full
 verdicts + rationales), the `evals` table in `data/governance.db` (feeds the
-Streamlit leaderboard and governance views), and - with `--push-scores` - as
+console leaderboard and governance views), and - with `--push-scores` - as
 `judge_*` scores on each trace in the Langfuse UI.
 
 ### 2. Add an agent and example data to Langfuse

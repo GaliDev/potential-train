@@ -20,10 +20,9 @@ numpy>=1.26.0
 scipy>=1.13.0
 scikit-learn>=1.5.0
 
-# API + UI
+# API + UI (FastAPI serves both the JSON API and the static web console)
 fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
-streamlit>=1.36.0
 
 # Datasets (public eval slices)
 datasets>=2.20.0

@@ -1,1 +1,1 @@
-"""FastAPI API and Streamlit dashboard for the governance platform."""
+"""FastAPI API that also serves the static web console for the governance platform."""
