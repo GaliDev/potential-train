@@ -1,21 +1,25 @@
-"""Run the med_rag agent over the medical gold set and push each run to Langfuse.
+"""Run a medical RAG agent over the gold set and push each run to Langfuse.
 
 End-to-end demo of the observability half of the platform:
 
 1. Load the clinical Q + medical-document items from data/gold/medical_rag_gold.jsonl.
-2. Run the registered `med_rag` LangGraph agent (gpt-4o-mini) over each item.
+2. Run the chosen LangGraph agent (--agent med_rag_weak | med_rag_strong) over each item.
 3. Record operational telemetry to the local store (so governance sees run signals).
 4. Create one Langfuse trace per item, tagged `medical-demo`, with the question as
    input, the agent answer as output, and agent_id / task_type / context in metadata.
 
-The traces this writes are exactly what `evaluation.langfuse_eval --tags medical-demo
---push-scores` then fetches, judges, and writes the five criterion scores back onto.
+The two agents are governed independently (separate agent_ids), so running each
+populates its own fleet row, scorecard, and autonomy tier. The traces this writes
+are exactly what `evaluation.langfuse_eval --tags medical-demo` then fetches and
+judges, persisting the five criterion scores to the platform store.
 
 Run with:
 
-    PYTHONPATH=src python -m evaluation.medical_demo
+    PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_strong
+    PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_weak
 
-Requires LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY and OPENAI_API_KEY in .env.
+Requires LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY and OPENAI_API_KEY in
+.env (or use --backend local to run against a local Ollama server with no cloud keys).
 """
 
 from __future__ import annotations
@@ -33,21 +37,23 @@ from eval_harness.store import record_run_signal, upsert_agent
 
 GOLD_PATH = PROJECT_ROOT / "data" / "gold" / "medical_rag_gold.jsonl"
 DEMO_TAG = "medical-demo"
-AGENT_ID = "med_rag"
+AGENT_CHOICES = ["med_rag_weak", "med_rag_strong"]
 
-# Default model per execution backend for the med_rag agent.
+# Fallback model per non-OpenAI backend (OpenAI model ids don't exist on HF/local,
+# so they are swapped for the backend's model; the openai backend keeps the
+# agent's own model — gpt-4o-mini for weak, gpt-4o for strong).
 _BACKEND_DEFAULT_MODEL = {
-    "openai": "gpt-4o-mini",
+    "openai": None,
     "hf": "meta-llama/Llama-3.1-8B-Instruct",
-    "local": "llama3.2",
+    "local": "llama3.1",
 }
 _LOCAL_BASE_URL = "http://localhost:11434/v1"  # Ollama's OpenAI-compatible endpoint
 
 
 def _make_backend_client(backend: str, base_url: str) -> LLMClient | None:
-    """Build the LLM client that powers med_rag for the chosen backend.
+    """Build the LLM client that powers the agent for the chosen backend.
 
-    - openai: the default OpenAI client (gpt-4o-mini).
+    - openai: the default OpenAI client (keeps the agent's own model).
     - hf:     the HuggingFace Inference Providers router (a hosted Llama).
     - local:  any OpenAI-compatible local server, e.g. Ollama (a local Llama).
     """
@@ -60,7 +66,7 @@ def _make_backend_client(backend: str, base_url: str) -> LLMClient | None:
     raise ValueError(f"Unknown backend: {backend}")
 
 
-def load_gold(path: Path) -> list[TestItem]:
+def load_gold(path: Path, agent_id: str) -> list[TestItem]:
     """Read the medical gold JSONL into TestItems (question + clinical context)."""
     items: list[TestItem] = []
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -75,7 +81,7 @@ def load_gold(path: Path) -> list[TestItem]:
                 task_prompt=row["task_prompt"],
                 context=row.get("context"),
                 reference=row.get("candidate_output"),
-                agent_id=AGENT_ID,
+                agent_id=agent_id,
             )
         )
     return items
@@ -83,18 +89,25 @@ def load_gold(path: Path) -> list[TestItem]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--agent",
+        choices=AGENT_CHOICES,
+        default="med_rag_strong",
+        help="Which medical RAG agent to run (each is governed separately)",
+    )
     parser.add_argument("--limit", type=int, default=None, help="Max gold items to run")
     parser.add_argument(
         "--backend",
         choices=["openai", "hf", "local"],
         default="openai",
-        help="LLM backend for med_rag: openai (gpt-4o-mini), hf (hosted Llama via HF router), "
-        "or local (Ollama-style OpenAI-compatible server)",
+        help="LLM backend: openai (the agent's own model — gpt-4o-mini/gpt-4o), "
+        "hf (hosted Llama via HF router), or local (Ollama-style OpenAI-compatible server)",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Override the agent model id (defaults per backend)",
+        help="Override the agent model id (otherwise the agent's own model on openai, "
+        "or the backend default on hf/local)",
     )
     parser.add_argument(
         "--base-url",
@@ -117,19 +130,22 @@ def main() -> None:
             "LANGFUSE_SECRET_KEY in your .env."
         )
 
+    agent_id = args.agent
     initialize_registry()
-    agent = get_registered_agent(AGENT_ID)
+    agent = get_registered_agent(agent_id)
     agent._use_llm = not args.no_llm  # noqa: SLF001 - demo toggles live LLM on the instance
     if agent._use_llm:
         agent._client = _make_backend_client(args.backend, args.base_url)  # noqa: SLF001
-        agent.model_name = args.model or _BACKEND_DEFAULT_MODEL[args.backend]
+        backend_model = args.model or _BACKEND_DEFAULT_MODEL[args.backend]
+        if backend_model:  # None on openai -> keep the agent's own model
+            agent.model_name = backend_model
     upsert_agent(agent.profile)
 
-    items = load_gold(GOLD_PATH)
+    items = load_gold(GOLD_PATH, agent_id)
     if args.limit:
         items = items[: args.limit]
     backend_desc = "extractive (no LLM)" if args.no_llm else f"{args.backend}:{agent.model_name}"
-    print(f"Loaded {len(items)} medical gold items; running agent '{AGENT_ID}' [{backend_desc}]")
+    print(f"Loaded {len(items)} medical gold items; running agent '{agent_id}' [{backend_desc}]")
 
     client = LangfuseClient()
     pushed = 0
@@ -137,11 +153,11 @@ def main() -> None:
         output, trace = agent.run(item)
 
         trace_id = client.create_trace(
-            name=AGENT_ID,
+            name=agent_id,
             input=item.task_prompt,
             output=output,
             metadata={
-                "agent_id": AGENT_ID,
+                "agent_id": agent_id,
                 "task_type": item.task_type.value,
                 "context": item.context,
                 "gold_id": item.id,
@@ -152,7 +168,7 @@ def main() -> None:
         # (written later by langfuse_eval) line up for the same trace.
         record_run_signal(
             item_id=f"{ITEM_ID_PREFIX}{trace_id}",
-            agent_id=AGENT_ID,
+            agent_id=agent_id,
             task_type=item.task_type,
             trace=trace,
         )
@@ -164,7 +180,7 @@ def main() -> None:
     print(
         f"\nPushed {pushed} traces to Langfuse tagged '{DEMO_TAG}' ({settings.langfuse_host}).\n"
         f"Next: PYTHONPATH=src python -m evaluation.langfuse_eval --tags {DEMO_TAG} "
-        f"--with-observations --push-scores"
+        f"--with-observations"
     )
 
 

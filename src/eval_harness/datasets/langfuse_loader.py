@@ -1,14 +1,17 @@
-"""Pull traces from Langfuse and map them onto TestItems; push scores back.
+"""Pull traces from Langfuse and map them onto TestItems for judging.
 
-This is the bridge between Langfuse (observability: what the agents actually
-did in production) and the judge panel (quality: how well they did it):
+This is the read side of the bridge between Langfuse (observability: what the
+agents actually did in production) and the judge panel (quality: how well they
+did it):
 
 1. `fetch_traces` pages through GET /api/public/traces for a time window.
 2. `trace_to_test_item` maps a Langfuse trace onto our `TestItem` schema so
    the existing panel (correctness/faithfulness/completeness/coherence/safety)
    can score it unchanged.
-3. `push_result_scores` writes the verdicts back via POST /api/public/scores,
-   so each trace shows the five criterion scores in the Langfuse UI.
+
+Judge verdicts are persisted to the local performance store and surfaced in the
+platform console; they are not written back to Langfuse. `create_trace` writes
+demo/agent runs into Langfuse as traces.
 
 Talks to the Langfuse Public API directly over HTTP (basic auth with the
 project's public/secret key pair) - no SDK dependency, works the same against
@@ -25,7 +28,7 @@ from typing import Any
 import httpx
 
 from ..config import settings
-from ..schemas import AggregateResult, TaskType, TestItem
+from ..schemas import TaskType, TestItem
 
 # Trace id prefix so judge results remain traceable back to Langfuse.
 ITEM_ID_PREFIX = "lf_"
@@ -113,28 +116,6 @@ class LangfuseClient:
     def get_trace(self, trace_id: str) -> dict:
         """Full trace including observations (GET /api/public/traces/{id})."""
         return self._request("GET", f"/api/public/traces/{trace_id}")
-
-    def create_score(
-        self,
-        trace_id: str,
-        name: str,
-        value: float,
-        comment: str | None = None,
-        observation_id: str | None = None,
-        data_type: str = "NUMERIC",
-    ) -> dict:
-        """Attach a score to a trace (POST /api/public/scores)."""
-        body: dict[str, Any] = {
-            "traceId": trace_id,
-            "name": name,
-            "value": value,
-            "dataType": data_type,
-        }
-        if comment:
-            body["comment"] = comment[:1000]
-        if observation_id:
-            body["observationId"] = observation_id
-        return self._request("POST", "/api/public/scores", json=body)
 
     def create_trace(
         self,
@@ -349,37 +330,3 @@ def load_langfuse_items(
         if item is not None:
             items.append(item)
     return items
-
-
-def push_result_scores(client: LangfuseClient, result: AggregateResult) -> int:
-    """Write a judge result back to its Langfuse trace as scores.
-
-    Pushes one numeric score per criterion (1-5, rationale as comment), the
-    aggregate score, and a boolean overall pass/fail. Returns how many scores
-    were created. The item must originate from this loader (id = lf_<traceId>).
-    """
-    trace_id = trace_id_for_item_id(result.item_id)
-    if trace_id is None:
-        return 0
-    created = 0
-    for verdict in result.verdicts:
-        client.create_score(
-            trace_id=trace_id,
-            name=f"judge_{verdict.criterion.value}",
-            value=float(verdict.score),
-            comment=verdict.rationale,
-        )
-        created += 1
-    client.create_score(
-        trace_id=trace_id,
-        name="judge_aggregate",
-        value=round(result.aggregate_score, 3),
-        comment=result.rationale or None,
-    )
-    client.create_score(
-        trace_id=trace_id,
-        name="judge_overall_pass",
-        value=1.0 if result.overall_pass else 0.0,
-        data_type="BOOLEAN",
-    )
-    return created + 2

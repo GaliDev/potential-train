@@ -1,4 +1,4 @@
-"""Judge live Langfuse traces with the panel and push scores back.
+"""Judge live Langfuse traces with the panel and persist results.
 
 The continuous-evaluation loop on top of Langfuse:
 
@@ -6,12 +6,12 @@ The continuous-evaluation loop on top of Langfuse:
 2. Map each trace onto a TestItem and run the judge panel over it
    (correctness, faithfulness, completeness, coherence, safety).
 3. Persist results to the local performance store (same path as fleet runs),
-   and optionally push the five criterion scores + aggregate + pass/fail back
-   to Langfuse so they appear on each trace in the UI.
+   where the platform console surfaces the five criterion scores, aggregate,
+   and pass/fail. Scores are not written back to Langfuse.
 
 Run with:
 
-    PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
+    PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20
 
 Requires LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env
 (and OPENAI_API_KEY for the judges).
@@ -26,7 +26,6 @@ from eval_harness.baseline import BaselineJudge
 from eval_harness.datasets.langfuse_loader import (
     LangfuseClient,
     load_langfuse_items,
-    push_result_scores,
 )
 from eval_harness.graph import PanelJudge
 from eval_harness.llm import LLMClient
@@ -97,7 +96,6 @@ def parse_args() -> argparse.Namespace:
         default="http://localhost:11434/v1",
         help="Base URL for --judge-backend local (default: Ollama at :11434)",
     )
-    parser.add_argument("--push-scores", action="store_true", help="Write scores back to Langfuse")
     parser.add_argument("--no-persist", action="store_true", help="Skip the local SQLite store")
     parser.add_argument("--dry-run", action="store_true", help="Only show mapped items; no judging")
     return parser.parse_args()
@@ -154,14 +152,8 @@ def main() -> None:
     for criterion, scores in by_criterion.items():
         print(f"  {criterion.value:<13} avg={sum(scores) / len(scores):.2f}  n={len(scores)}")
 
-    if args.push_scores:
-        pushed = 0
-        for result in report.results:
-            try:
-                pushed += push_result_scores(client, result)
-            except RuntimeError as exc:
-                print(f"  [push-scores] {result.item_id}: {exc}")
-        print(f"Pushed {pushed} scores back to Langfuse")
+    if not args.no_persist:
+        print("Scores persisted to the performance store; view them in the platform console.")
 
     client.close()
 

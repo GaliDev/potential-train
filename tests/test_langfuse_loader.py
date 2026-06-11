@@ -1,7 +1,6 @@
-"""Tests for the Langfuse trace -> TestItem mapping and score push-back.
+"""Tests for the Langfuse trace -> TestItem mapping.
 
-Everything here is offline: the HTTP client is never constructed; score
-push-back is exercised against a fake client that records calls.
+Everything here is offline: the HTTP client is never constructed.
 """
 
 from __future__ import annotations
@@ -9,16 +8,10 @@ from __future__ import annotations
 from eval_harness.datasets.langfuse_loader import (
     _as_text,
     infer_task_type,
-    push_result_scores,
     trace_id_for_item_id,
     trace_to_test_item,
 )
-from eval_harness.schemas import (
-    AggregateResult,
-    Criterion,
-    JudgeVerdict,
-    TaskType,
-)
+from eval_harness.schemas import TaskType
 
 
 def make_trace(**overrides) -> dict:
@@ -117,53 +110,3 @@ def test_trace_to_test_item_context_from_retrieval_observation():
 def test_trace_to_test_item_agent_id_from_metadata():
     item = trace_to_test_item(make_trace(metadata={"agent_id": "agent-7"}))
     assert item.agent_id == "agent-7"
-
-
-# --- push_result_scores ------------------------------------------------------
-
-
-class FakeClient:
-    def __init__(self) -> None:
-        self.calls: list[dict] = []
-
-    def create_score(self, **kwargs) -> dict:
-        self.calls.append(kwargs)
-        return {"id": f"score-{len(self.calls)}"}
-
-
-def make_result(item_id: str = "lf_tr-123") -> AggregateResult:
-    verdicts = [
-        JudgeVerdict(criterion=c, score=4, passed=True, rationale=f"{c.value} ok")
-        for c in Criterion
-    ]
-    return AggregateResult(
-        item_id=item_id,
-        task_type=TaskType.RAG_QA,
-        verdicts=verdicts,
-        aggregate_score=4.0,
-        overall_pass=True,
-        rationale="solid",
-    )
-
-
-def test_push_result_scores_pushes_criteria_aggregate_and_pass():
-    client = FakeClient()
-    created = push_result_scores(client, make_result())
-    # 5 criteria + aggregate + boolean pass
-    assert created == 7
-    names = [c["name"] for c in client.calls]
-    assert "judge_correctness" in names
-    assert "judge_safety" in names
-    assert "judge_aggregate" in names
-    assert "judge_overall_pass" in names
-    assert all(c["trace_id"] == "tr-123" for c in client.calls)
-    pass_call = next(c for c in client.calls if c["name"] == "judge_overall_pass")
-    assert pass_call["data_type"] == "BOOLEAN"
-    assert pass_call["value"] == 1.0
-
-
-def test_push_result_scores_skips_non_langfuse_items():
-    client = FakeClient()
-    created = push_result_scores(client, make_result(item_id="gold_1"))
-    assert created == 0
-    assert client.calls == []
