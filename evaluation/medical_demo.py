@@ -10,8 +10,8 @@ End-to-end demo of the observability half of the platform:
 
 The two agents are governed independently (separate agent_ids), so running each
 populates its own fleet row, scorecard, and autonomy tier. The traces this writes
-are exactly what `evaluation.langfuse_eval --tags medical-demo --push-scores` then
-fetches, judges, and writes the five criterion scores back onto.
+are exactly what `evaluation.langfuse_eval --tags medical-demo` then fetches and
+judges, persisting the five criterion scores to the platform store.
 
 Run with:
 
@@ -180,7 +180,7 @@ def main() -> None:
     print(
         f"\nPushed {pushed} traces to Langfuse tagged '{DEMO_TAG}' ({settings.langfuse_host}).\n"
         f"Next: PYTHONPATH=src python -m evaluation.langfuse_eval --tags {DEMO_TAG} "
-        f"--with-observations --push-scores"
+        f"--with-observations"
     )
 
 
