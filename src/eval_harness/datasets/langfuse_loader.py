@@ -18,6 +18,7 @@ self-hosted and cloud.
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -134,6 +135,49 @@ class LangfuseClient:
         if observation_id:
             body["observationId"] = observation_id
         return self._request("POST", "/api/public/scores", json=body)
+
+    def create_trace(
+        self,
+        *,
+        name: str,
+        input: Any,
+        output: Any,
+        metadata: dict | None = None,
+        tags: list[str] | None = None,
+        trace_id: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+    ) -> str:
+        """Create a trace via the ingestion endpoint; returns the trace id.
+
+        Uses POST /api/public/ingestion with a single `trace-create` event, the
+        same Public-API-over-HTTP path as the rest of this client (no SDK). The
+        worker ingests asynchronously, so a freshly created trace may take a few
+        seconds to become queryable via list_traces.
+        """
+        trace_id = trace_id or str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        body: dict[str, Any] = {
+            "id": trace_id,
+            "name": name,
+            "input": input,
+            "output": output,
+            "metadata": metadata or {},
+            "tags": tags or [],
+            "timestamp": now,
+        }
+        if user_id:
+            body["userId"] = user_id
+        if session_id:
+            body["sessionId"] = session_id
+        event = {
+            "id": str(uuid.uuid4()),
+            "type": "trace-create",
+            "timestamp": now,
+            "body": body,
+        }
+        self._request("POST", "/api/public/ingestion", json={"batch": [event]})
+        return trace_id
 
     def close(self) -> None:
         self._http.close()

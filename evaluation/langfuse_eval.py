@@ -29,6 +29,7 @@ from eval_harness.datasets.langfuse_loader import (
     push_result_scores,
 )
 from eval_harness.graph import PanelJudge
+from eval_harness.llm import LLMClient
 from eval_harness.runner import run_evaluation
 from eval_harness.schemas import AgentProfile, Criterion, TaskType
 from eval_harness.store import upsert_agent
@@ -79,6 +80,23 @@ def parse_args() -> argparse.Namespace:
         default="panel",
         help="panel = five criterion judges + aggregator; baseline = single call",
     )
+    parser.add_argument(
+        "--judge-backend",
+        choices=["default", "local"],
+        default="default",
+        help="default = per-criterion models (OpenAI/HF router); "
+        "local = force all judges onto a local Ollama-style server",
+    )
+    parser.add_argument(
+        "--judge-model",
+        default="llama3.1",
+        help="Model id for --judge-backend local (default: llama3.1)",
+    )
+    parser.add_argument(
+        "--judge-base-url",
+        default="http://localhost:11434/v1",
+        help="Base URL for --judge-backend local (default: Ollama at :11434)",
+    )
     parser.add_argument("--push-scores", action="store_true", help="Write scores back to Langfuse")
     parser.add_argument("--no-persist", action="store_true", help="Skip the local SQLite store")
     parser.add_argument("--dry-run", action="store_true", help="Only show mapped items; no judging")
@@ -113,7 +131,16 @@ def main() -> None:
     if not args.no_persist:
         register_discovered_agents(items)
 
-    judge = PanelJudge() if args.judge == "panel" else BaselineJudge()
+    judge_client = None
+    judge_model = None
+    if args.judge_backend == "local":
+        judge_client = LLMClient(api_key="local", base_url=args.judge_base_url)
+        judge_model = args.judge_model
+        print(f"Judging with local backend {judge_model} @ {args.judge_base_url}")
+    if args.judge == "panel":
+        judge = PanelJudge(model=judge_model, client=judge_client)
+    else:
+        judge = BaselineJudge(client=judge_client, model=judge_model)
     report = run_evaluation(items, judge, persist=not args.no_persist)
 
     print(

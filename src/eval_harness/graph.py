@@ -18,6 +18,7 @@ from langgraph.graph import END, START, StateGraph
 
 from .agents.aggregator import aggregate
 from .agents.criteria import PANEL_CRITERIA, CriterionJudge
+from .llm import LLMClient
 from .schemas import AggregateResult, Criterion, JudgeVerdict, TestItem
 
 AGGREGATE_NODE = "aggregate"
@@ -28,13 +29,16 @@ class PanelState(TypedDict):
     # None -> each criterion judge uses the model mapped to it in
     # config/judge_panel.json; a string forces that model for all criteria.
     model: Optional[str]
+    # None -> per-criterion default clients (OpenAI / HF router). A client here
+    # forces every criterion onto it, e.g. a local Ollama-backed LLMClient.
+    client: Optional[LLMClient]
     verdicts: Annotated[list[JudgeVerdict], add]
     result: Optional[AggregateResult]
 
 
 def _make_judge_node(criterion: Criterion):
     def node(state: PanelState) -> dict:
-        judge = CriterionJudge(criterion, model=state.get("model"))
+        judge = CriterionJudge(criterion, client=state.get("client"), model=state.get("model"))
         verdict = judge.judge(state["item"])
         return {"verdicts": [verdict]}
 
@@ -70,14 +74,18 @@ class PanelJudge:
 
     judge_mode = "panel"
 
-    def __init__(self, model: str | None = None) -> None:
+    def __init__(self, model: str | None = None, client: LLMClient | None = None) -> None:
         self._graph = build_graph()
         # None = per-criterion models from config/judge_panel.json.
         self._model = model
+        # None = per-criterion default clients; set to force a single backend
+        # (e.g. a local Ollama client) across all criteria.
+        self._client = client
 
     def judge(self, item: TestItem) -> AggregateResult:
         final = self._graph.invoke(
-            {"item": item, "model": self._model, "verdicts": [], "result": None}
+            {"item": item, "model": self._model, "client": self._client,
+             "verdicts": [], "result": None}
         )
         result = final.get("result")
         if result is None:
