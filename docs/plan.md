@@ -40,6 +40,15 @@ isProject: true
 
 # Agent Workforce Governance Platform
 
+> **⚠️ Historical build plan.** This is the original plan and is not kept in sync
+> with the shipped code. Notably superseded: the UI is a **static single-page
+> console served by FastAPI** (not Streamlit), there is **no `calibration.py`**
+> (cost/quality levers live in `improvement.py`), and the registry now holds
+> **14 agents** (9 prompt/model configs + 5 LangGraph incl. 2 medical RAG) judged
+> by **per-criterion open models via the HF router**. See [README.md](../README.md)
+> and [report.md](report.md) for current state, [code-review.md](code-review.md)
+> for known gaps.
+
 ## Concept
 Most tools stop at *scoring* model outputs. This platform manages a **fleet of AI agents like a team**: a multiagent LLM-as-judge **eval engine** continuously scores agents, and a **governance layer** turns that history into four decisions:
 
