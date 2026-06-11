@@ -18,7 +18,6 @@ from langgraph.graph import END, START, StateGraph
 
 from .agents.aggregator import aggregate
 from .agents.criteria import PANEL_CRITERIA, CriterionJudge
-from .config import settings
 from .schemas import AggregateResult, Criterion, JudgeVerdict, TestItem
 
 AGGREGATE_NODE = "aggregate"
@@ -26,7 +25,9 @@ AGGREGATE_NODE = "aggregate"
 
 class PanelState(TypedDict):
     item: TestItem
-    model: str
+    # None -> each criterion judge uses the model mapped to it in
+    # config/judge_panel.json; a string forces that model for all criteria.
+    model: Optional[str]
     verdicts: Annotated[list[JudgeVerdict], add]
     result: Optional[AggregateResult]
 
@@ -71,7 +72,8 @@ class PanelJudge:
 
     def __init__(self, model: str | None = None) -> None:
         self._graph = build_graph()
-        self._model = model or settings.judge_model
+        # None = per-criterion models from config/judge_panel.json.
+        self._model = model
 
     def judge(self, item: TestItem) -> AggregateResult:
         final = self._graph.invoke(

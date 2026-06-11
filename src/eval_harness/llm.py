@@ -19,10 +19,20 @@ from .config import settings
 T = TypeVar("T", bound=BaseModel)
 
 # USD per token (derived from per-1M-token list prices). Update as needed.
+# HF-router judge models register their rates from config/judge_panel.json
+# via `register_model_pricing`.
 _PER_1M = {
     "gpt-4o": {"input": 2.50, "output": 10.00},
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
 }
+
+# OpenAI-compatible endpoint of the HuggingFace Inference Providers router.
+HF_ROUTER_BASE_URL = "https://router.huggingface.co/v1"
+
+
+def register_model_pricing(model: str, input_per_1m: float, output_per_1m: float) -> None:
+    """Register USD-per-1M-token rates so CallStats costs unknown models correctly."""
+    _PER_1M[model] = {"input": input_per_1m, "output": output_per_1m}
 
 _MAX_RETRIES = 6
 _RETRY_BASE_DELAY_S = 1.0
@@ -86,13 +96,22 @@ class CostTracker:
 class LLMClient:
     """Wraps the OpenAI SDK for both free-text and structured (Pydantic) output."""
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        timeout_s: float | None = None,
+    ) -> None:
         key = api_key or settings.openai_api_key
         if not key:
             raise RuntimeError(
                 "OPENAI_API_KEY is not set. Copy .env.example to .env and add your key."
             )
-        self._client = OpenAI(api_key=key, timeout=settings.openai_timeout_s)
+        self._client = OpenAI(
+            api_key=key,
+            base_url=base_url,
+            timeout=timeout_s if timeout_s is not None else settings.openai_timeout_s,
+        )
 
     def complete_text(
         self,
@@ -101,9 +120,11 @@ class LLMClient:
         user: str,
         model: str | None = None,
         temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> tuple[str, CallStats]:
         model = model or settings.judge_model
         temperature = settings.judge_temperature if temperature is None else temperature
+        extra = {} if max_tokens is None else {"max_tokens": max_tokens}
         start = time.perf_counter()
         resp = _with_retries(self._client.chat.completions.create)(
             model=model,
@@ -112,6 +133,7 @@ class LLMClient:
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
+            **extra,
         )
         stats = self._stats(model, resp, start)
         return resp.choices[0].message.content or "", stats
@@ -160,6 +182,7 @@ class LLMClient:
 
 
 _default_client: LLMClient | None = None
+_hf_router_client: LLMClient | None = None
 
 
 def get_client() -> LLMClient:
@@ -168,3 +191,25 @@ def get_client() -> LLMClient:
     if _default_client is None:
         _default_client = LLMClient()
     return _default_client
+
+
+def get_hf_router_client() -> LLMClient:
+    """Shared client for the HuggingFace Inference Providers router.
+
+    The router speaks the OpenAI chat protocol, so it reuses LLMClient with a
+    different base URL and the HF token as the API key.
+    """
+    global _hf_router_client
+    if _hf_router_client is None:
+        if not settings.hf_token:
+            raise RuntimeError(
+                "HF_TOKEN is not set. The judge panel config maps criteria to "
+                "HuggingFace-router models; add your HF access token to .env "
+                "(get one at https://huggingface.co/settings/tokens)."
+            )
+        _hf_router_client = LLMClient(
+            api_key=settings.hf_token,
+            base_url=HF_ROUTER_BASE_URL,
+            timeout_s=settings.hf_timeout_s,
+        )
+    return _hf_router_client

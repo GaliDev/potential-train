@@ -9,14 +9,8 @@ The item rendering is reused verbatim so every judge sees identical inputs.
 from __future__ import annotations
 
 from eval_harness.agents.base import PASS_THRESHOLD, render_item_for_judge
-from eval_harness.agents.criteria import CRITERION_GUIDES
+from eval_harness.agents.criteria import CRITERION_GUIDES, JSON_FORMAT_INSTRUCTIONS
 from eval_harness.schemas import MAX_SCORE, MIN_SCORE, Criterion, TestItem
-
-JSON_FORMAT_INSTRUCTIONS = (
-    'Respond with ONLY a single JSON object, no other text, in this exact shape:\n'
-    '{"score": <integer 1-5>, "passed": <true|false>, '
-    '"rationale": "<one or two sentences>", "evidence": ["<short quote>", ...]}'
-)
 
 
 def criterion_brief(criterion: Criterion) -> str:

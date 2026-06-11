@@ -54,7 +54,7 @@ class FakeClient:
         return resp, CallStats(model=model or "gpt-4o", prompt_tokens=50,
                                completion_tokens=10, latency_s=0.2, cost_usd=self.cost_fn(model))
 
-    def complete_text(self, *, system, user, model=None, temperature=None):
+    def complete_text(self, *, system, user, model=None, temperature=None, max_tokens=None):
         self.calls.append(("text", model))
         return "fake text", CallStats(model=model or "gpt-4o", prompt_tokens=50,
                                       completion_tokens=10, latency_s=0.2, cost_usd=self.cost_fn(model))

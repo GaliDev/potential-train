@@ -31,6 +31,11 @@ class Settings(BaseModel):
     judge_model_cheap: str = "gpt-4o-mini"
     judge_temperature: float = 0.0
     openai_timeout_s: float = 60.0
+    # HuggingFace Inference Providers router (per-criterion judge models,
+    # see config/judge_panel.json). Open models can be slow to first token,
+    # hence the longer timeout.
+    hf_token: str = ""
+    hf_timeout_s: float = 180.0
     max_concurrency: int = 5
     database_url: str = "sqlite:///data/governance.db"
     # Langfuse integration (self-hosted or cloud). Keys come from the
@@ -57,6 +62,8 @@ def get_settings() -> Settings:
         judge_model_cheap=os.getenv("JUDGE_MODEL_CHEAP", "gpt-4o-mini"),
         judge_temperature=float(os.getenv("JUDGE_TEMPERATURE", "0.0")),
         openai_timeout_s=float(os.getenv("OPENAI_TIMEOUT_S", "60.0")),
+        hf_token=os.getenv("HF_TOKEN", ""),
+        hf_timeout_s=float(os.getenv("HF_TIMEOUT_S", "180.0")),
         max_concurrency=int(os.getenv("MAX_CONCURRENCY", "5")),
         database_url=os.getenv("DATABASE_URL", "sqlite:///data/governance.db"),
         langfuse_host=os.getenv("LANGFUSE_HOST", "http://localhost:3000"),
