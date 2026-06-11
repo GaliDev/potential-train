@@ -10,7 +10,11 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from pydantic import BaseModel
+import subprocess
+import sys
 
 from evaluation import kpi_report
 
@@ -175,3 +179,62 @@ def get_audit(limit: int = 100) -> list[dict]:
         }
         for r in fetch_audit(limit=limit)
     ]
+
+
+@app.post("/admin/seed")
+def admin_seed() -> dict:
+    """Seed demo data."""
+    try:
+        from eval_harness.demo_seed import seed_demo_data
+        seed_demo_data()
+        return {"status": "success", "message": "Demo data seeded"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/admin/simulate")
+def admin_simulate() -> dict:
+    """Simulate runtime with drift scenarios."""
+    try:
+        from eval_harness.simulate_runtime import simulate_runtime, DriftScenario
+        simulate_runtime(
+            n_per_agent=30,
+            scenarios=[
+                DriftScenario(agent_id="rag_weak", safety_incident=True),
+                DriftScenario(agent_id="sum_weak", latency_multiplier=3.0),
+            ],
+        )
+        return {"status": "success", "message": "Runtime simulation completed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/admin/agent/{agent_name}")
+def admin_run_agent(agent_name: str) -> dict:
+    """Get info about a LangGraph agent from agents/ directory."""
+    valid_agents = {
+        "rag_react_agent": "RAG with retrieval, groundedness check, and retry logic",
+        "summarizer_refine_agent": "Summarizer with iterative refinement",
+        "translator_backcheck_agent": "Translator with back-translation verification",
+    }
+    if agent_name not in valid_agents:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown agent. Valid: {', '.join(valid_agents.keys())}",
+        )
+    try:
+        agent_module = __import__(f"agents.{agent_name}", fromlist=[agent_name])
+        return {
+            "status": "success",
+            "agent": agent_name,
+            "description": valid_agents[agent_name],
+            "note": "LangGraph agents require task inputs (TestItem). See agents/ directory to run with eval data.",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Mount the static console at the root.
+web_dir = Path(__file__).parent / "web"
+if web_dir.exists():
+    app.mount("/", StaticFiles(directory=web_dir, html=True), name="console")

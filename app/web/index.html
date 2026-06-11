@@ -711,11 +711,48 @@ document.addEventListener("keydown", e=>{
 });
 document.addEventListener("change", e=>{ if(e.target.id==="hm"||e.target.id==="hc") loadKpis(); });
 
+async function runAdminAction(action, agentName){
+  const btn = event.target;
+  const original = btn.textContent;
+  btn.textContent = "Running…"; btn.disabled = true;
+  try{
+    const url = agentName ? `/admin/agent/${agentName}` : `/admin/${action}`;
+    const res = await fetch(API_BASE.replace(/\/$/,"") + url, {method: "POST"});
+    const data = await res.json();
+    if(res.ok){
+      btn.textContent = "✓ Done"; btn.style.color = "var(--ok)";
+      setTimeout(()=>{ btn.textContent = original; btn.disabled = false; btn.style.color = ""; }, 2000);
+    }else{
+      alert(`Error: ${data.detail}`);
+      btn.textContent = original; btn.disabled = false;
+    }
+  }catch(e){
+    alert(`Failed: ${e.message}`);
+    btn.textContent = original; btn.disabled = false;
+  }
+}
+
 function openAdmin(){
+  const agentBtns = `
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+      <button class="btn" onclick="runAdminAction(null, 'rag_react_agent')" style="flex:1">RAG React</button>
+      <button class="btn" onclick="runAdminAction(null, 'summarizer_refine_agent')" style="flex:1">Summarizer</button>
+      <button class="btn" onclick="runAdminAction(null, 'translator_backcheck_agent')" style="flex:1">Translator</button>
+    </div>`;
   $("#adminmodal").innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Demo controls">
     <header><strong>Demo controls</strong><button class="btn ghost" id="closeadmin" aria-label="Close">✕</button></header>
-    <div class="body">Seed data and simulate runtime live here — separated from primary navigation so destructive demo actions never sit next to real governance views.<br><br>
-    In live mode these map to <span class="mono">seed_demo_data()</span> and <span class="mono">simulate_runtime()</span>.</div></div>`;
+    <div class="body">
+      <div style="font-weight:600; margin-bottom:8px">Setup</div>
+      <div style="display:flex; gap:8px; margin-bottom:12px">
+        <button class="btn primary" onclick="runAdminAction('seed')" style="flex:1">Seed data</button>
+        <button class="btn primary" onclick="runAdminAction('simulate')" style="flex:1">Simulate runtime</button>
+      </div>
+      <div style="font-weight:600; margin-bottom:8px; margin-top:12px">Run agents</div>
+      ${agentBtns}
+      <div style="font-size:12px; color:var(--faint); margin-top:12px; line-height:1.5">
+        Seed populates demo agents. Simulate adds drift. Agents are LangGraph implementations from <span class="mono">agents/</span>.
+      </div>
+    </div></div>`;
   $("#adminmodal").hidden=false;
 }
 function downloadReport(){
