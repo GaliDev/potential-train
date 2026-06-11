@@ -49,7 +49,7 @@ src/eval_harness/
   datasets/            # public slice + custom gold-set loaders
   fleet/               # managed agent configs + output generator
   governance/          # router, autonomy, reviews, policy
-  calibration.py       # bias mitigation + thresholds
+  improvement.py       # cost/quality levers (CascadeJudge, JuryJudge)
   metrics.py           # kappa / Spearman / accuracy vs gold
 agents/                # contributor agents, auto-discovered at runtime via
                        # @register_agent (RAG, summarizer, translator, medical RAG)
@@ -178,13 +178,16 @@ PYTHONPATH=src uvicorn app.api:app --reload
 
 The console polls `GET /decisions` on load. If the store is empty you'll see a
 "No agent data yet" prompt — use the **⋯ → Seed data** button (no API key
-needed) to populate 144 synthetic evaluations across all 12 agents and reload.
+needed) to populate synthetic evaluations across the seeded fleet and reload.
+(The registry holds **14 agents** — 9 prompt/model configs + 5 LangGraph; seeding
+covers 12 of them, the 2 medical RAG agents are driven separately via
+`evaluation.medical_demo`.)
 
 ### Admin actions (⋯ menu, top-right)
 
 | Action | What it does | Key needed? |
 |---|---|---|
-| **Seed data** | Inserts synthetic eval history for all 12 agents | No |
+| **Seed data** | Inserts synthetic eval history for the 12 seeded agents (9 fleet + 3 LangGraph) | No |
 | **Simulate runtime** | Adds 30 eval rows per agent with drift scenarios (rag_weak safety incident, sum_weak latency spike) | No |
 | **Run rag_react_agent** | Runs the real LangGraph RAG agent on 1 gold task, scores it with the 5-judge panel, persists | Yes (`OPENAI_API_KEY`) |
 | **Run summarizer_refine_agent** | Same, for the refine-based summarizer | Yes |

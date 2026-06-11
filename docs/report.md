@@ -81,8 +81,11 @@ now informed by both quality *and* operational reliability.
   safety) with a deterministic aggregator and a safety gate.
 - Judge validated against human gold labels (accuracy, Cohen's kappa, Spearman).
 - Real **LangGraph runtime agents** (RAG retrieve-check-retry, summarizer
-  draft-verify-refine, translator translate-backcheck-retry) that emit genuine
-  execution traces, alongside the prompt/model fleet configs.
+  draft-verify-refine, translator translate-backcheck-retry, and two clinical
+  medical-RAG variants - a strict `med_rag_weak` and a higher-capability
+  `med_rag_strong`) that emit genuine execution traces, alongside the prompt/model
+  fleet configs. The registry holds **14 agents** (9 prompt/model configs + 5
+  LangGraph); each is governed independently by `agent_id`.
 - **Operational signal capture** per execution (`ExecutionTrace` -> `run_signals`
   store): uptime, error rate, p95 latency, tool success rate, retries, refusals,
   groundedness, token usage, and safety flags.
@@ -106,16 +109,16 @@ deterministic (no LLM call).
 
 ```mermaid
 flowchart TD
-    Fleet["Managed fleet (LLM): prompt/model configs - gpt-4o + gpt-4o-mini; real LangGraph agents - gpt-4o-mini"] --> Gen[Output generator]
+    Fleet["Managed fleet: 9 prompt/model configs (gpt-4o + gpt-4o-mini) + 5 LangGraph agents (RAG, summarizer, translator, 2x medical RAG; gpt-4o-mini / gpt-4o)"] --> Gen[Output generator]
     Sim["Calibrated runtime simulator (drift/incident scenarios)"] --> Store
     Gen --> Pre[Preprocessor]
     Gen --> Trace["ExecutionTrace: latency / tokens / tools / retries / refusals / groundedness / errors"]
-    subgraph eval [Eval Engine - LangGraph panel]
-      Pre --> Correct["Correctness (LLM: gpt-4o)"]
-      Pre --> Faith["Faithfulness (LLM: gpt-4o)"]
-      Pre --> Complete["Completeness (LLM: gpt-4o)"]
-      Pre --> Coh["Coherence (LLM: gpt-4o)"]
-      Pre --> Safe["Safety (LLM: gpt-4o)"]
+    subgraph eval [Eval Engine - LangGraph panel; per-criterion open models via HF router]
+      Pre --> Correct["Correctness (LLM: Qwen3-8B)"]
+      Pre --> Faith["Faithfulness (LLM: Llama-3.1-8B)"]
+      Pre --> Complete["Completeness (LLM: Qwen3-14B)"]
+      Pre --> Coh["Coherence (LLM: Qwen3-14B)"]
+      Pre --> Safe["Safety (LLM: Qwen3-14B)"]
       Correct --> Agg["Aggregator / Meta-Judge (deterministic, no LLM)"]
       Faith --> Agg
       Complete --> Agg
@@ -158,7 +161,7 @@ flowchart TD
 | Component | Technology choice | Reason |
 | --- | --- | --- |
 | Orchestration | LangGraph | Fan-out/join graph for the judge panel; also powers the real runtime agents (retrieve/verify/retry loops) |
-| LLM | OpenAI `gpt-4o` + `gpt-4o-mini` | Strong judging quality; mini enables a cost cascade |
+| Judge LLMs | Per-criterion open models via the HF Inference Providers router (Qwen3-8B / Llama-3.1-8B / Qwen3-14B, see `config/judge_panel.json`); OpenAI `gpt-4o` + `gpt-4o-mini` for forced single-model / cascade modes | Each criterion judged by the model that won it in the `hf_judges` benchmark; `gpt-4o-mini` enables a cost cascade |
 | Data models | Pydantic | Structured LLM outputs and typed DTOs, incl. `ExecutionTrace` telemetry |
 | Performance store | SQLite via SQLModel | Zero-setup system of record: `evals` (quality) + `run_signals` (operations) + audit |
 | Metrics | pandas, scipy, scikit-learn | Kappa, Spearman, precision/recall |
@@ -216,9 +219,13 @@ flowchart TD
 - **Quality:** `JuryJudge` takes the median of repeated panel runs to reduce
   variance and single-run bias.
 
-**Technical KPIs (76-item gold set, 2026-06-04).**
+**Technical KPIs - configuration comparison (76-item gold set, 2026-06-04).** The
+`Panel` column here was measured on the earlier single-model **gpt-4o** panel and
+is kept as the methodology baseline; the *current* default panel routes each
+criterion to an HF-router open model (`config/judge_panel.json`) and is reported
+separately below.
 
-| Metric | Target | Baseline | Panel | Cascade | Jury |
+| Metric | Target | Baseline | Panel (gpt-4o) | Cascade | Jury |
 | --- | --- | --- | --- | --- | --- |
 | Pass/fail accuracy vs human | >= 80% | 100% | 98.7% | 100% | 98.7% |
 | Cohen's kappa | >= 0.6 | 1.00 | 0.97 | 1.00 | 0.97 |
@@ -232,6 +239,28 @@ The panel adds per-criterion breakdowns for governance decisions. The cascade is
 the best cost lever: it preserves perfect pass/fail agreement while costing less
 per item than the baseline. The jury is the quality/redundancy lever, but it is
 much slower and more expensive.
+
+**Current judge panel (HF open models).** The shipped panel assigns each criterion
+to the open model that won it in the `hf_judges` benchmark (latest run 2026-06-11,
+same 76-item gold set). Per-criterion agreement vs human gold:
+
+| Criterion | Judge model | Pass-acc | Kappa | Spearman | MAE |
+| --- | --- | --- | --- | --- | --- |
+| Correctness | Qwen3-8B | 0.974 | 0.947 | 0.951 | 0.237 |
+| Faithfulness | Llama-3.1-8B | 0.974 | 0.947 | 0.950 | 0.342 |
+| Completeness | Qwen3-14B | 1.000 | 1.000 | 0.965 | 0.276 |
+| Coherence | Qwen3-14B | 1.000 | 1.000 | 0.973 | 0.184 |
+| Safety | Qwen3-14B | 0.934 | 0.868 | 0.956 | 0.237 |
+
+Each constituent open model, run as a full single-model panel, scores overall
+**pass-accuracy 0.97-1.00 / kappa 0.95-1.00 / Spearman 0.94-0.96** - the same
+agreement band as the gpt-4o panel above - while the mixed panel costs
+**~$0.00014 / item (~57x cheaper than gpt-4o's $0.0080)**, with per-criterion
+latencies of ~1.1-1.4 s (≈6.2 s summed across the five judges). In short: swapping
+the gpt-4o panel for the per-criterion open-model panel **holds judge quality and
+cuts cost by ~98%**.
+(The combined item-level pass-accuracy/kappa of the mixed panel - one cell per the
+table above - can be regenerated with `evaluation.benchmark --mode compare`.)
 
 **Operational KPIs (from `run_signals`).** Beyond judge quality, the platform now
 tracks fleet *operations*, surfaced in the KPI report
@@ -275,9 +304,11 @@ Full code repository: [GaliDev/potential-train](https://github.com/GaliDev/poten
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add OPENAI_API_KEY
+cp .env.example .env   # add HF_TOKEN (default per-criterion panel) +
+                       # OPENAI_API_KEY (forced single-model / cascade / jury)
 
-# Benchmark the judge vs gold labels (needs API key)
+# Benchmark the judge vs gold labels (HF_TOKEN for the panel; OPENAI_API_KEY for
+# baseline/cascade/jury modes)
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
 
 # Optional: include public translation labels from WMT

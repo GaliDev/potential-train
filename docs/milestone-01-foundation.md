@@ -1,5 +1,15 @@
 # Milestone 1 - Foundation & Working Platform
 
+> **⚠️ Historical milestone snapshot.** This records the state at Milestone 1 and
+> is intentionally not kept in sync with later work. Several details have since
+> been superseded: the UI is a **static single-page console served by FastAPI**
+> (not Streamlit; there is no `app/ui.py`), there is **no `calibration.py`**, the
+> registry now holds **14 agents** (9 prompt/model configs + 5 LangGraph incl. 2
+> medical RAG), the judge panel runs **per-criterion open models via the HF
+> router** (not gpt-4o), and the suite is now **112 tests**. For current state see
+> [README.md](../README.md) and [report.md](report.md); for known gaps see
+> [code-review.md](code-review.md).
+
 A chronological and structural record of everything done from repo creation
 through the current state. This marks the first complete end-to-end build of the
 Agent Workforce Governance platform (eval engine + governance layer + app +
