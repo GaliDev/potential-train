@@ -720,8 +720,10 @@ async function runAdminAction(action, agentName){
     const res = await fetch(API_BASE.replace(/\/$/,"") + url, {method: "POST"});
     const data = await res.json();
     if(res.ok){
-      btn.textContent = "✓ Done"; btn.style.color = "var(--ok)";
-      setTimeout(()=>{ btn.textContent = original; btn.disabled = false; btn.style.color = ""; }, 2000);
+      btn.textContent = (data.evaluated!=null) ? `✓ ${data.evaluated} scored` : "✓ Done";
+      btn.style.color = "var(--ok)";
+      await refreshData();
+      setTimeout(()=>{ btn.textContent = original; btn.disabled = false; btn.style.color = ""; }, 2500);
     }else{
       alert(`Error: ${data.detail}`);
       btn.textContent = original; btn.disabled = false;
@@ -750,7 +752,8 @@ function openAdmin(){
       <div style="font-weight:600; margin-bottom:8px; margin-top:12px">Run agents</div>
       ${agentBtns}
       <div style="font-size:12px; color:var(--faint); margin-top:12px; line-height:1.5">
-        Seed populates demo agents. Simulate adds drift. Agents are LangGraph implementations from <span class="mono">agents/</span>.
+        <b>Seed</b> populates all agents (incl. the LangGraph ones) with offline synthetic scores — no API key needed. <b>Simulate</b> adds drift signals.<br>
+        <b>Run agents</b> does a real judged run: invokes the LangGraph graph from <span class="mono">agents/</span>, then the 5-judge panel scores it — needs <span class="mono">OPENAI_API_KEY</span>.
       </div>
     </div></div>`;
   $("#adminmodal").hidden=false;
@@ -762,9 +765,12 @@ function downloadReport(){
 }
 
 /* ---------- Init ---------- */
-async function bootstrap(){
+async function refreshData(){
   if(API_BASE){ try{ AGENTS=await loadLive(); }catch(e){ console.error("Live load failed — using mock.", e); AGENTS=MOCK_AGENTS; } }
   renderTriage(); renderRows(); renderDetail();
+}
+async function bootstrap(){
+  await refreshData();
   if(API_BASE) console.info("Live mode →", API_BASE);
 }
 bootstrap();

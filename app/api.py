@@ -13,8 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from pydantic import BaseModel
-import subprocess
-import sys
 
 from evaluation import kpi_report
 
@@ -209,29 +207,75 @@ def admin_simulate() -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Console buttons pass the module name; map it to the registered agent_id.
+_AGENT_NAME_TO_ID = {
+    "rag_react_agent": "rag_react",
+    "summarizer_refine_agent": "sum_refine",
+    "translator_backcheck_agent": "trans_backcheck",
+}
+
+
 @app.post("/admin/agent/{agent_name}")
-def admin_run_agent(agent_name: str) -> dict:
-    """Get info about a LangGraph agent from agents/ directory."""
-    valid_agents = {
-        "rag_react_agent": "RAG with retrieval, groundedness check, and retry logic",
-        "summarizer_refine_agent": "Summarizer with iterative refinement",
-        "translator_backcheck_agent": "Translator with back-translation verification",
-    }
-    if agent_name not in valid_agents:
+def admin_run_agent(agent_name: str, limit: int = 1) -> dict:
+    """Run a LangGraph agent for real and persist its judged scores.
+
+    Invokes the agent's graph over `limit` gold tasks, records the run signal
+    (operational telemetry), then scores each output with the 5-judge panel and
+    persists — so the agent shows up in the dashboard with true scores.
+
+    The panel judges call the OpenAI API, so this needs OPENAI_API_KEY. Without
+    a key, use POST /admin/seed for offline synthetic scores instead.
+    """
+    from eval_harness.config import settings
+    from eval_harness.datasets.loaders import load_gold
+    from eval_harness.fleet.registry import get_registered_agent, produce_item
+    from eval_harness.graph import PanelJudge
+    from eval_harness.runner import run_evaluation
+    from eval_harness.store import record_run_signal, upsert_agent
+
+    agent_id = _AGENT_NAME_TO_ID.get(agent_name, agent_name)
+    try:
+        agent = get_registered_agent(agent_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown agent: {agent_id}") from exc
+
+    if not settings.has_openai_key:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown agent. Valid: {', '.join(valid_agents.keys())}",
+            detail=(
+                "No OPENAI_API_KEY set - the 5-judge panel needs it to score a real run. "
+                "Add a key to .env, or use 'Seed data' for offline synthetic scores."
+            ),
         )
+
+    tt = agent.profile.task_type
+    tasks = load_gold(tt)[: max(1, limit)]
+    if not tasks:
+        raise HTTPException(status_code=404, detail=f"No gold tasks for {tt.value}")
+
+    upsert_agent(agent.profile)
+    judge = PanelJudge()
+    scores = []
     try:
-        agent_module = __import__(f"agents.{agent_name}", fromlist=[agent_name])
-        return {
-            "status": "success",
-            "agent": agent_name,
-            "description": valid_agents[agent_name],
-            "note": "LangGraph agents require task inputs (TestItem). See agents/ directory to run with eval data.",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        for task in tasks:
+            produced, trace = produce_item(agent, task)
+            record_run_signal(
+                item_id=produced.id, agent_id=agent.agent_id, task_type=tt, trace=trace
+            )
+            rep = run_evaluation([produced], judge, persist=True, save_run=False)
+            for r in rep.results:
+                scores.append(
+                    {"item": r.item_id, "score": r.aggregate_score, "pass": r.overall_pass}
+                )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return {
+        "status": "success",
+        "agent": agent_id,
+        "evaluated": len(scores),
+        "scores": scores,
+    }
 
 
 # Mount the static console at the root.
