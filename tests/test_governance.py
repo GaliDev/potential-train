@@ -13,7 +13,7 @@ def seeded():
 
 def test_profiles_built_for_fleet(seeded):
     profiles = compute_all_performance(TaskType.RAG_QA)
-    assert {p.agent_id for p in profiles} == {"rag_strong", "rag_cheap", "rag_weak"}
+    assert {p.agent_id for p in profiles} == {"rag_strong", "rag_cheap", "rag_weak", "rag_react"}
     weak = compute_agent_performance("rag_weak", TaskType.RAG_QA)
     strong = compute_agent_performance("rag_strong", TaskType.RAG_QA)
     assert strong.avg_score > weak.avg_score
@@ -27,7 +27,7 @@ def test_autonomy_blocks_weak_agent(seeded):
 
 def test_router_avoids_ineligible_agent(seeded):
     decision = router.route_next_task(TaskType.RAG_QA, audit=False)
-    assert decision.chosen_agent in {"rag_strong", "rag_cheap"}
+    assert decision.chosen_agent in {"rag_strong", "rag_cheap", "rag_react"}
     assert decision.chosen_agent != "rag_weak"
 
 
