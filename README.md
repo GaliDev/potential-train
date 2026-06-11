@@ -51,10 +51,13 @@ src/eval_harness/
   governance/          # router, autonomy, reviews, policy
   calibration.py       # bias mitigation + thresholds
   metrics.py           # kappa / Spearman / accuracy vs gold
+agents/                # contributor agents, auto-discovered at runtime via
+                       # @register_agent (RAG, summarizer, translator, medical RAG)
 evaluation/benchmark.py # agreement metrics + report
+evaluation/medical_demo.py # medical RAG demo runner (see "Medical RAG demo")
 app/api.py             # FastAPI endpoints + serves the web console
 app/web/index.html     # web console (single-page GUI)
-data/gold/             # curated hand-labeled gold set (tracked)
+data/gold/             # curated hand-labeled gold set (tracked, incl. medical_rag_gold.jsonl)
 data/public/           # cached public eval slices (gitignored)
 data/runs/             # generated run results (gitignored)
 ```
@@ -83,9 +86,13 @@ PYTHONPATH=src python -m evaluation.benchmark --mode compare --wmt --wmt-limit 4
 # Populate the dashboard with real fleet outputs + persisted panel judgments
 PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 
-# Judge live Langfuse traces and push the 5 criterion scores back to Langfuse
-# (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env)
-PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
+# Judge live Langfuse traces; the 5 criterion scores persist to the local store
+# and show in the console (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY)
+PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20
+
+# Medical RAG demo: run a clinical agent, push its runs to Langfuse, then judge
+# them (see "Medical RAG demo" below)
+PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_strong
 
 # Benchmark candidate judge LLMs (HF open models + Claude + Grok) against the
 # gold set and pick the best judge overall and per criterion (see hf_judges/README.md)
@@ -204,8 +211,9 @@ Then open http://localhost:8000 in your browser.
 The platform can act as an evaluation layer on top of [Langfuse](https://langfuse.com):
 it pulls the traces Langfuse collected from your LLM apps, runs the five-criterion
 judge panel (correctness, faithfulness, completeness, coherence, safety) over them
-on your side, stores the results in the local performance store, and (optionally)
-pushes the scores back onto each trace in the Langfuse UI.
+on your side, and stores the results in the local performance store, where the
+console surfaces the scores and governance views. Langfuse remains the source of
+traces; judge scores live in the platform.
 
 ### 0. Prerequisite: run Langfuse with Docker
 
@@ -245,9 +253,6 @@ PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --dry-run
 # Pull the last 24h of traces (max 20), judge them, store results locally
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20
 
-# Also push the per-criterion scores back onto the traces in Langfuse
-PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
-
 # Filter which traces to pull
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 48 --tags my-tag        # by tag(s)
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 48 --name rag-pipeline  # by trace name
@@ -268,10 +273,11 @@ PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --default-task-type
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --no-persist
 ```
 
-Results land in three places: `data/runs/run_panel_<timestamp>.json` (full
-verdicts + rationales), the `evals` table in `data/governance.db` (feeds the
-console leaderboard and governance views), and - with `--push-scores` - as
-`judge_*` scores on each trace in the Langfuse UI.
+Results land in two places: `data/runs/run_panel_<timestamp>.json` (full
+verdicts + rationales) and the `evals` table in `data/governance.db`, which feeds
+the console leaderboard and governance views. Judge scores are not written back to
+Langfuse - the platform console is the single place to view them (Langfuse keeps
+the traces for observability).
 
 ### 2. Add an agent and example data to Langfuse
 
@@ -303,8 +309,43 @@ Ingestion is asynchronous - wait a few seconds, then judge just that trace by
 its tag and watch `my-new-agent` appear on the dashboard leaderboard:
 
 ```bash
-PYTHONPATH=src python -m evaluation.langfuse_eval --hours 1 --tags manual-demo --push-scores
+PYTHONPATH=src python -m evaluation.langfuse_eval --hours 1 --tags manual-demo
 ```
+
+### 3. Medical RAG demo (end-to-end example)
+
+A worked example of the full loop - run an agent, push its runs to Langfuse, judge
+them, and govern it. Two clinical Q&A agents ship as **contributor agents** in
+[`agents/medical_rag_agent.py`](agents/medical_rag_agent.py); like the other
+LangGraph agents in the top-level `agents/` directory, they are auto-discovered at
+startup via the `@register_agent` decorator. They answer strictly from the clinical
+documents in [`data/gold/medical_rag_gold.jsonl`](data/gold/medical_rag_gold.jsonl):
+
+- `med_rag_weak` - gpt-4o-mini, strict groundedness guard, top-sentence retrieval.
+- `med_rag_strong` - gpt-4o, full-document retrieval, richer prompt, lenient guard.
+
+Each registers under its own `agent_id`, so the two are governed independently
+(separate scorecards, autonomy tiers, and audit trails).
+
+```bash
+# 1. Run an agent over the gold set; each item is pushed to Langfuse as a trace
+#    tagged 'medical-demo', with agent_id / task_type / context in metadata.
+PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_strong
+PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_weak
+
+# 2. Judge those traces; the 5 criterion scores persist to the store and surface
+#    in the console, split per agent_id.
+PYTHONPATH=src python -m evaluation.langfuse_eval --tags medical-demo --with-observations
+
+# Backends (no OpenAI key? swap the model): the agent runs on --backend openai
+# (default; gpt-4o-mini/gpt-4o), hf (hosted Llama via HF router), or local (an
+# Ollama-compatible server). The judge panel likewise takes --judge-backend local.
+PYTHONPATH=src python -m evaluation.medical_demo --agent med_rag_strong --backend local --model llama3.1
+PYTHONPATH=src python -m evaluation.langfuse_eval --tags medical-demo --with-observations --judge-backend local --judge-model llama3.1
+```
+
+Then open the console (http://localhost:8000) to see each medical agent's
+scorecard, autonomy tier, and audit trail.
 
 ## Docs
 
