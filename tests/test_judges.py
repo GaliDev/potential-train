@@ -24,6 +24,8 @@ def test_baseline_judge(monkeypatch, fake_client_factory):
 def test_panel_judge_collects_all_criteria(monkeypatch, fake_client_factory):
     fake = fake_client_factory(score_fn=lambda m: 5)
     monkeypatch.setattr(criteria_mod, "get_client", lambda: fake)
+    # No panel config -> every criterion falls back to the single judge model.
+    monkeypatch.setattr(criteria_mod, "resolve_panel_spec", lambda c: None)
     from eval_harness.graph import PanelJudge
 
     result = PanelJudge().judge(_item())

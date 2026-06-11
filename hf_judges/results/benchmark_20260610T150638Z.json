@@ -1,0 +1,167 @@
+{
+  "generated_at": "2026-06-10T15:06:38.056201+00:00",
+  "n_items": 30,
+  "task_mix": {
+    "rag_qa": 10,
+    "summarization": 10,
+    "translation": 10
+  },
+  "criteria": [
+    "correctness",
+    "faithfulness",
+    "completeness",
+    "coherence",
+    "safety"
+  ],
+  "models": [
+    {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "model_id": "Qwen/Qwen3-8B",
+      "judge_mode": "hf_qwen3-8b",
+      "metrics": {
+        "n": 30,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9441,
+        "spearman_p": 0.0,
+        "score_mae": 0.27,
+        "avg_latency_s": 5.4515,
+        "total_cost_usd": 0.003001,
+        "cost_per_item_usd": 0.0001
+      },
+      "per_criterion_mean": {
+        "correctness": 3.433,
+        "faithfulness": 3.5,
+        "completeness": 3.367,
+        "coherence": 3.567,
+        "safety": 4.0
+      },
+      "parse_counts": {
+        "json": 150,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9753
+    },
+    {
+      "key": "llama31-8b",
+      "display_name": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "judge_mode": "hf_llama31-8b",
+      "metrics": {
+        "n": 30,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9349,
+        "spearman_p": 0.0,
+        "score_mae": 0.3417,
+        "avg_latency_s": 6.405,
+        "total_cost_usd": 0.003262,
+        "cost_per_item_usd": 0.000109
+      },
+      "per_criterion_mean": {
+        "correctness": 3.233,
+        "faithfulness": 3.133,
+        "completeness": 2.967,
+        "coherence": 3.133,
+        "safety": 3.4
+      },
+      "parse_counts": {
+        "json": 142,
+        "regex": 8,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9502
+    },
+    {
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "model_id": "Qwen/Qwen3-14B",
+      "judge_mode": "hf_qwen3-14b",
+      "metrics": {
+        "n": 30,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9765,
+        "spearman_p": 0.0,
+        "score_mae": 0.2933,
+        "avg_latency_s": 6.9653,
+        "total_cost_usd": 0.004945,
+        "cost_per_item_usd": 0.000165
+      },
+      "per_criterion_mean": {
+        "correctness": 3.267,
+        "faithfulness": 3.3,
+        "completeness": 3.167,
+        "coherence": 3.2,
+        "safety": 3.4
+      },
+      "parse_counts": {
+        "json": 150,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9487
+    },
+    {
+      "key": "panel",
+      "display_name": "GPT-4o panel (baseline)",
+      "model_id": "gpt-4o",
+      "judge_mode": "panel",
+      "metrics": {
+        "n": 30,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9849,
+        "spearman_p": 0.0,
+        "score_mae": 0.25,
+        "avg_latency_s": 10.3159,
+        "total_cost_usd": 0.235328,
+        "cost_per_item_usd": 0.007844
+      },
+      "per_criterion_mean": {
+        "correctness": 3.267,
+        "faithfulness": 3.2,
+        "completeness": 3.233,
+        "coherence": 3.467,
+        "safety": 4.467
+      },
+      "parse_counts": {},
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.7845
+    }
+  ],
+  "weights": {
+    "quality": 0.8,
+    "latency": 0.1,
+    "cost": 0.1
+  },
+  "winners": {
+    "overall": {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "composite": 0.9753
+    },
+    "per_criterion": {}
+  }
+}

@@ -1,0 +1,540 @@
+{
+  "generated_at": "2026-06-10T16:19:48.837281+00:00",
+  "n_items": 76,
+  "task_mix": {
+    "rag_qa": 16,
+    "summarization": 30,
+    "translation": 30
+  },
+  "criteria": [
+    "correctness",
+    "faithfulness",
+    "completeness",
+    "coherence",
+    "safety"
+  ],
+  "models": [
+    {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "model_id": "Qwen/Qwen3-8B",
+      "judge_mode": "hf_qwen3-8b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 0.9737,
+        "cohen_kappa": 0.9468,
+        "precision": 0.9429,
+        "recall": 1.0,
+        "f1": 0.9706,
+        "spearman": 0.9609,
+        "spearman_p": 0.0,
+        "score_mae": 0.2329,
+        "avg_latency_s": 7.7489,
+        "total_cost_usd": 0.007668,
+        "cost_per_item_usd": 0.000101
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9522,
+          "mae": 0.2237,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.197,
+          "composite": 0.9549
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.9518,
+          "mae": 0.1974,
+          "pass_accuracy": 0.9474,
+          "mean_score": 3.25,
+          "composite": 0.9495
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.913,
+          "mae": 0.3421,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.105,
+          "composite": 0.9365
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.9235,
+          "mae": 0.2763,
+          "pass_accuracy": 0.9605,
+          "mean_score": 3.25,
+          "composite": 0.9402
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.8322,
+          "mae": 0.6184,
+          "pass_accuracy": 0.8421,
+          "mean_score": 3.776,
+          "composite": 0.8615
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.197,
+        "faithfulness": 3.25,
+        "completeness": 3.105,
+        "coherence": 3.25,
+        "safety": 3.776
+      },
+      "parse_counts": {
+        "json": 378,
+        "regex": 2,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9542
+    },
+    {
+      "key": "llama31-8b",
+      "display_name": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "judge_mode": "hf_llama31-8b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9405,
+        "spearman_p": 0.0,
+        "score_mae": 0.3283,
+        "avg_latency_s": 6.6813,
+        "total_cost_usd": 0.008374,
+        "cost_per_item_usd": 0.00011
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9236,
+          "mae": 0.3553,
+          "pass_accuracy": 0.9474,
+          "mean_score": 3.066,
+          "composite": 0.9419
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.9503,
+          "mae": 0.3421,
+          "pass_accuracy": 0.9737,
+          "mean_score": 2.947,
+          "composite": 0.9569
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.9567,
+          "mae": 0.4079,
+          "pass_accuracy": 0.9868,
+          "mean_score": 2.803,
+          "composite": 0.9577
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.9652,
+          "mae": 0.2632,
+          "pass_accuracy": 1.0,
+          "mean_score": 2.947,
+          "composite": 0.9732
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.8876,
+          "mae": 0.4211,
+          "pass_accuracy": 0.9211,
+          "mean_score": 3.184,
+          "composite": 0.9209
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.066,
+        "faithfulness": 2.947,
+        "completeness": 2.803,
+        "coherence": 2.947,
+        "safety": 3.184
+      },
+      "parse_counts": {
+        "json": 350,
+        "regex": 30,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9717
+    },
+    {
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "model_id": "Qwen/Qwen3-14B",
+      "judge_mode": "hf_qwen3-14b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.964,
+        "spearman_p": 0.0,
+        "score_mae": 0.2454,
+        "avg_latency_s": 6.8653,
+        "total_cost_usd": 0.012716,
+        "cost_per_item_usd": 0.000167
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9626,
+          "mae": 0.25,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.039,
+          "composite": 0.9643
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.959,
+          "mae": 0.25,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.066,
+          "composite": 0.9634
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.9654,
+          "mae": 0.2763,
+          "pass_accuracy": 1.0,
+          "mean_score": 2.934,
+          "composite": 0.9703
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.9728,
+          "mae": 0.1842,
+          "pass_accuracy": 1.0,
+          "mean_score": 3.026,
+          "composite": 0.9785
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.9558,
+          "mae": 0.2368,
+          "pass_accuracy": 0.9342,
+          "mean_score": 3.184,
+          "composite": 0.9529
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.039,
+        "faithfulness": 3.066,
+        "completeness": 2.934,
+        "coherence": 3.026,
+        "safety": 3.184
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9786
+    },
+    {
+      "key": "claude",
+      "display_name": "Claude Opus 4.8",
+      "model_id": "claude-opus-4-8",
+      "judge_mode": "hf_claude",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9733,
+        "spearman_p": 0.0,
+        "score_mae": 0.2546,
+        "avg_latency_s": 16.8885,
+        "total_cost_usd": 2.627975,
+        "cost_per_item_usd": 0.034579
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9749,
+          "mae": 0.1842,
+          "pass_accuracy": 0.9342,
+          "mean_score": 3.158,
+          "composite": 0.7634
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.9136,
+          "mae": 0.3553,
+          "pass_accuracy": 0.8553,
+          "mean_score": 3.408,
+          "composite": 0.7147
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.9391,
+          "mae": 0.3421,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.026,
+          "composite": 0.7539
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.5585,
+          "mae": 1.0395,
+          "pass_accuracy": 0.6184,
+          "mean_score": 4.145,
+          "composite": 0.5112
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.1479,
+          "mae": 1.8026,
+          "pass_accuracy": 0.4342,
+          "mean_score": 4.987,
+          "composite": 0.3018
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.158,
+        "faithfulness": 3.408,
+        "completeness": 3.026,
+        "coherence": 4.145,
+        "safety": 4.987
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.7819
+    },
+    {
+      "key": "grok",
+      "display_name": "Grok 4",
+      "model_id": "grok-4",
+      "judge_mode": "hf_grok",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 0.9737,
+        "cohen_kappa": 0.9461,
+        "precision": 1.0,
+        "recall": 0.9394,
+        "f1": 0.9688,
+        "spearman": 0.9195,
+        "spearman_p": 0.0,
+        "score_mae": 0.4329,
+        "avg_latency_s": 16.5767,
+        "total_cost_usd": 0.785535,
+        "cost_per_item_usd": 0.010336
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9413,
+          "mae": 0.3421,
+          "pass_accuracy": 0.9737,
+          "mean_score": 2.895,
+          "composite": 0.8279
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.9024,
+          "mae": 0.3816,
+          "pass_accuracy": 0.8421,
+          "mean_score": 3.197,
+          "composite": 0.7798
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.6547,
+          "mae": 0.8289,
+          "pass_accuracy": 0.8684,
+          "mean_score": 3.197,
+          "composite": 0.691
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.0909,
+          "mae": 1.7105,
+          "pass_accuracy": 0.4474,
+          "mean_score": 4.842,
+          "composite": 0.3695
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.2105,
+          "mae": 1.7105,
+          "pass_accuracy": 0.4605,
+          "mean_score": 4.895,
+          "composite": 0.405
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 2.895,
+        "faithfulness": 3.197,
+        "completeness": 3.197,
+        "coherence": 4.842,
+        "safety": 4.895
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.8196
+    },
+    {
+      "key": "panel",
+      "display_name": "GPT-4o panel (baseline)",
+      "model_id": "gpt-4o",
+      "judge_mode": "panel",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 0.9868,
+        "cohen_kappa": 0.9733,
+        "precision": 0.9706,
+        "recall": 1.0,
+        "f1": 0.9851,
+        "spearman": 0.9714,
+        "spearman_p": 0.0,
+        "score_mae": 0.2711,
+        "avg_latency_s": 10.5367,
+        "total_cost_usd": 0.608818,
+        "cost_per_item_usd": 0.008011
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "spearman": 0.9722,
+          "mae": 0.2368,
+          "pass_accuracy": 0.9868,
+          "mean_score": 3.026,
+          "composite": 0.9126
+        },
+        "faithfulness": {
+          "n": 76,
+          "spearman": 0.9683,
+          "mae": 0.2632,
+          "pass_accuracy": 0.9868,
+          "mean_score": 2.974,
+          "composite": 0.9098
+        },
+        "completeness": {
+          "n": 76,
+          "spearman": 0.9726,
+          "mae": 0.2895,
+          "pass_accuracy": 0.9737,
+          "mean_score": 3.0,
+          "composite": 0.9057
+        },
+        "coherence": {
+          "n": 76,
+          "spearman": 0.8415,
+          "mae": 0.4211,
+          "pass_accuracy": 0.9211,
+          "mean_score": 3.316,
+          "composite": 0.8479
+        },
+        "safety": {
+          "n": 76,
+          "spearman": 0.5784,
+          "mae": 1.0789,
+          "pass_accuracy": 0.6184,
+          "mean_score": 4.263,
+          "composite": 0.6532
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.026,
+        "faithfulness": 2.974,
+        "completeness": 3.0,
+        "coherence": 3.316,
+        "safety": 4.263
+      },
+      "parse_counts": {},
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.912
+    }
+  ],
+  "winners": {
+    "overall": {
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "composite": 0.9786
+    },
+    "per_criterion": {
+      "correctness": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "spearman": 0.9626,
+        "mae": 0.25,
+        "pass_accuracy": 0.9737,
+        "mean_score": 3.039,
+        "composite": 0.9643
+      },
+      "faithfulness": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "spearman": 0.959,
+        "mae": 0.25,
+        "pass_accuracy": 0.9737,
+        "mean_score": 3.066,
+        "composite": 0.9634
+      },
+      "completeness": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "spearman": 0.9654,
+        "mae": 0.2763,
+        "pass_accuracy": 1.0,
+        "mean_score": 2.934,
+        "composite": 0.9703
+      },
+      "coherence": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "spearman": 0.9728,
+        "mae": 0.1842,
+        "pass_accuracy": 1.0,
+        "mean_score": 3.026,
+        "composite": 0.9785
+      },
+      "safety": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "spearman": 0.9558,
+        "mae": 0.2368,
+        "pass_accuracy": 0.9342,
+        "mean_score": 3.184,
+        "composite": 0.9529
+      }
+    }
+  },
+  "weights": {
+    "quality": 0.8,
+    "latency": 0.1,
+    "cost": 0.1
+  }
+}

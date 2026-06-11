@@ -1,0 +1,33 @@
+{
+  "_comment": "Per-criterion judge model mapping, chosen from the hf_judges benchmark results. Each panel criterion is judged by the model under criteria[<criterion>]; model keys must exist in models. Override the file location with the JUDGE_PANEL_CONFIG env var. See README.md ('Configuring the judges').",
+  "models": {
+    "qwen3-8b": {
+      "model_id": "Qwen/Qwen3-8B",
+      "display_name": "Qwen3 8B",
+      "provider": "hf-router",
+      "prompt_suffix": "\n/no_think",
+      "est_price_per_1m": [0.05, 0.1]
+    },
+    "llama31-8b": {
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "display_name": "Llama 3.1 8B Instruct",
+      "provider": "hf-router",
+      "prompt_suffix": "",
+      "est_price_per_1m": [0.05, 0.1]
+    },
+    "qwen3-14b": {
+      "model_id": "Qwen/Qwen3-14B",
+      "display_name": "Qwen3 14B",
+      "provider": "hf-router",
+      "prompt_suffix": "\n/no_think",
+      "est_price_per_1m": [0.08, 0.16]
+    }
+  },
+  "criteria": {
+    "correctness": "qwen3-8b",
+    "faithfulness": "llama31-8b",
+    "completeness": "qwen3-14b",
+    "coherence": "qwen3-14b",
+    "safety": "qwen3-14b"
+  }
+}

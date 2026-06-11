@@ -25,7 +25,7 @@ performance reviews have visible quality differences.
 | Component        | Choice                          |
 | ---------------- | ------------------------------- |
 | Orchestration    | LangGraph                       |
-| LLM              | OpenAI `gpt-4o` + `gpt-4o-mini` |
+| Judge LLMs       | Per-criterion open models via the HF Inference Providers router (Qwen3 8B / Llama 3.1 8B / Qwen3 14B, see `config/judge_panel.json`); OpenAI `gpt-4o` + `gpt-4o-mini` for forced single-model modes |
 | Data models      | Pydantic                        |
 | Performance store| SQLite via SQLModel             |
 | Metrics          | pandas, scipy, scikit-learn     |
@@ -35,8 +35,11 @@ performance reviews have visible quality differences.
 ## Project layout
 
 ```
+config/
+  judge_panel.json     # criterion -> judge model mapping (see "Configuring the judges")
 src/eval_harness/
   config.py            # env-driven settings
+  judge_panel_config.py # loader/validator for config/judge_panel.json
   schemas.py           # Pydantic models (TestItem, JudgeVerdict, AgentProfile, ...)
   llm.py               # OpenAI wrapper + token/cost tracking
   store.py             # SQLite performance store (registry + results)
@@ -63,13 +66,15 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-cp .env.example .env   # then add your OPENAI_API_KEY
+cp .env.example .env   # then add your HF_TOKEN (default judge panel)
+                       # and OPENAI_API_KEY (forced single-model modes)
 ```
 
 ## Run
 
 ```bash
-# Benchmark the judge against human gold labels (needs OPENAI_API_KEY)
+# Benchmark the judge against human gold labels (needs HF_TOKEN for the
+# per-criterion panel; OPENAI_API_KEY for baseline/cascade/jury modes)
 PYTHONPATH=src python -m evaluation.benchmark --mode compare --with-improve
 
 # Include public translation data (WMT) in addition to local gold labels
@@ -82,6 +87,10 @@ PYTHONPATH=src python -m evaluation.fleet_run --limit-per-type 1
 # (needs LANGFUSE_HOST / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY in .env)
 PYTHONPATH=src python -m evaluation.langfuse_eval --hours 24 --limit 20 --push-scores
 
+# Benchmark candidate judge LLMs (HF open models + Claude + Grok) against the
+# gold set and pick the best judge overall and per criterion (see hf_judges/README.md)
+PYTHONPATH=src python -m hf_judges.run_benchmark
+
 # GUI + API: FastAPI serves the web console at http://localhost:8000
 # (works offline via the "⋯" menu → "Seed data")
 PYTHONPATH=src uvicorn app.api:app --reload
@@ -89,6 +98,58 @@ PYTHONPATH=src uvicorn app.api:app --reload
 # Tests (offline, no API key needed)
 pytest
 ```
+
+## Configuring the judges
+
+The five-criterion panel no longer runs on a single model: each criterion is
+judged by the model that won it in the `hf_judges` benchmark. The mapping
+lives in a dedicated config file, **`config/judge_panel.json`**:
+
+```json
+{
+  "models": {
+    "qwen3-8b":   { "model_id": "Qwen/Qwen3-8B", "provider": "hf-router", "prompt_suffix": "\n/no_think", "est_price_per_1m": [0.05, 0.10] },
+    "llama31-8b": { "model_id": "meta-llama/Llama-3.1-8B-Instruct", "provider": "hf-router", "est_price_per_1m": [0.05, 0.10] },
+    "qwen3-14b":  { "model_id": "Qwen/Qwen3-14B", "provider": "hf-router", "prompt_suffix": "\n/no_think", "est_price_per_1m": [0.08, 0.16] }
+  },
+  "criteria": {
+    "correctness":  "qwen3-8b",
+    "faithfulness": "llama31-8b",
+    "completeness": "qwen3-14b",
+    "coherence":    "qwen3-14b",
+    "safety":       "qwen3-14b"
+  }
+}
+```
+
+- **`models`** is a registry of judge models. `provider` is `hf-router`
+  (HuggingFace Inference Providers, OpenAI chat protocol, strict-JSON
+  prompting + lenient parsing) or `openai` (native structured outputs).
+  `prompt_suffix` is appended to the system prompt (e.g. `/no_think` disables
+  Qwen3 thinking mode); `est_price_per_1m` is `[input, output]` USD per 1M
+  tokens, used for cost tracking in reports.
+- **`criteria`** maps each of the five criteria to a model key. All five must
+  be mapped, and every key must exist in `models` - the loader fails fast on
+  typos.
+
+To change which model judges a criterion, edit the file (add the model under
+`models` if new) - no code changes needed. Point the platform at a different
+mapping file with the `JUDGE_PANEL_CONFIG` env var.
+
+Requirements and fallbacks:
+
+- `hf-router` models need `HF_TOKEN` in `.env`
+  ([create one here](https://huggingface.co/settings/tokens)); `openai`
+  models need `OPENAI_API_KEY`. `HF_TIMEOUT_S` (default 180) bounds each
+  HF-router call.
+- If the config file is missing, the panel logs a warning and falls back to
+  the old behavior: every criterion judged by `JUDGE_MODEL` (default
+  `gpt-4o`).
+- Forcing a single model bypasses the mapping entirely: `PanelJudge(model=...)`,
+  and the cascade/jury improvement judges (which use `JUDGE_MODEL` /
+  `JUDGE_MODEL_CHEAP`), keep their previous behavior.
+- Each verdict records the model that produced it, so per-criterion models
+  show up as-is in run files, the dashboard, and Langfuse scores.
 
 ## Governance Console (Web UI)
 
