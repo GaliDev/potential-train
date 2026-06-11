@@ -1,0 +1,666 @@
+{
+  "generated_at": "2026-06-10T18:34:47.670441+00:00",
+  "n_items": 76,
+  "task_mix": {
+    "rag_qa": 16,
+    "summarization": 30,
+    "translation": 30
+  },
+  "criteria": [
+    "correctness",
+    "faithfulness",
+    "completeness",
+    "coherence",
+    "safety"
+  ],
+  "models": [
+    {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "model_id": "Qwen/Qwen3-8B",
+      "judge_mode": "hf_qwen3-8b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 0.9737,
+        "cohen_kappa": 0.9468,
+        "precision": 0.9429,
+        "recall": 1.0,
+        "f1": 0.9706,
+        "spearman": 0.9608,
+        "spearman_p": 0.0,
+        "score_mae": 0.2329,
+        "avg_latency_s": 5.3111,
+        "total_cost_usd": 0.007662,
+        "cost_per_item_usd": 0.000101
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9468,
+          "spearman": 0.9536,
+          "mae": 0.2237,
+          "mean_score": 3.197,
+          "avg_latency_s": 1.0793,
+          "total_cost_usd": 0.001534,
+          "composite": 0.9636
+        },
+        "faithfulness": {
+          "n": 76,
+          "pass_accuracy": 0.9474,
+          "cohen_kappa": 0.8944,
+          "spearman": 0.9518,
+          "mae": 0.1974,
+          "mean_score": 3.25,
+          "avg_latency_s": 1.0699,
+          "total_cost_usd": 0.001648,
+          "composite": 0.9489
+        },
+        "completeness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9464,
+          "spearman": 0.913,
+          "mae": 0.3421,
+          "mean_score": 3.105,
+          "avg_latency_s": 1.0845,
+          "total_cost_usd": 0.001523,
+          "composite": 0.9495
+        },
+        "coherence": {
+          "n": 76,
+          "pass_accuracy": 0.9605,
+          "cohen_kappa": 0.9205,
+          "spearman": 0.9235,
+          "mae": 0.2763,
+          "mean_score": 3.25,
+          "avg_latency_s": 1.022,
+          "total_cost_usd": 0.001476,
+          "composite": 0.9471
+        },
+        "safety": {
+          "n": 76,
+          "pass_accuracy": 0.8421,
+          "cohen_kappa": 0.6917,
+          "spearman": 0.8322,
+          "mae": 0.6184,
+          "mean_score": 3.776,
+          "avg_latency_s": 1.0555,
+          "total_cost_usd": 0.001484,
+          "composite": 0.8423
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.197,
+        "faithfulness": 3.25,
+        "completeness": 3.105,
+        "coherence": 3.25,
+        "safety": 3.776
+      },
+      "parse_counts": {
+        "json": 378,
+        "regex": 2,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9646
+    },
+    {
+      "key": "llama31-8b",
+      "display_name": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "judge_mode": "hf_llama31-8b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9344,
+        "spearman_p": 0.0,
+        "score_mae": 0.3355,
+        "avg_latency_s": 6.3731,
+        "total_cost_usd": 0.008375,
+        "cost_per_item_usd": 0.00011
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "pass_accuracy": 0.9474,
+          "cohen_kappa": 0.8944,
+          "spearman": 0.9236,
+          "mae": 0.3553,
+          "mean_score": 3.066,
+          "avg_latency_s": 1.26,
+          "total_cost_usd": 0.001633,
+          "composite": 0.9271
+        },
+        "faithfulness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9468,
+          "spearman": 0.9503,
+          "mae": 0.3421,
+          "mean_score": 2.947,
+          "avg_latency_s": 1.2871,
+          "total_cost_usd": 0.001769,
+          "composite": 0.9478
+        },
+        "completeness": {
+          "n": 76,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.9479,
+          "mae": 0.4079,
+          "mean_score": 2.803,
+          "avg_latency_s": 1.3481,
+          "total_cost_usd": 0.001765,
+          "composite": 0.9568
+        },
+        "coherence": {
+          "n": 76,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.9654,
+          "mae": 0.2763,
+          "mean_score": 2.934,
+          "avg_latency_s": 1.2553,
+          "total_cost_usd": 0.001617,
+          "composite": 0.9685
+        },
+        "safety": {
+          "n": 76,
+          "pass_accuracy": 0.9342,
+          "cohen_kappa": 0.8684,
+          "spearman": 0.9152,
+          "mae": 0.3947,
+          "mean_score": 3.132,
+          "avg_latency_s": 1.2226,
+          "total_cost_usd": 0.001595,
+          "composite": 0.9146
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.066,
+        "faithfulness": 2.947,
+        "completeness": 2.803,
+        "coherence": 2.934,
+        "safety": 3.132
+      },
+      "parse_counts": {
+        "json": 356,
+        "regex": 24,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9598
+    },
+    {
+      "key": "qwen3-14b",
+      "display_name": "Qwen3 14B",
+      "model_id": "Qwen/Qwen3-14B",
+      "judge_mode": "hf_qwen3-14b",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9642,
+        "spearman_p": 0.0,
+        "score_mae": 0.2428,
+        "avg_latency_s": 7.0141,
+        "total_cost_usd": 0.012706,
+        "cost_per_item_usd": 0.000167
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9468,
+          "spearman": 0.9626,
+          "mae": 0.25,
+          "mean_score": 3.039,
+          "avg_latency_s": 1.4197,
+          "total_cost_usd": 0.002547,
+          "composite": 0.9485
+        },
+        "faithfulness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9468,
+          "spearman": 0.959,
+          "mae": 0.25,
+          "mean_score": 3.066,
+          "avg_latency_s": 1.5219,
+          "total_cost_usd": 0.002813,
+          "composite": 0.944
+        },
+        "completeness": {
+          "n": 76,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.9652,
+          "mae": 0.2632,
+          "mean_score": 2.947,
+          "avg_latency_s": 1.3875,
+          "total_cost_usd": 0.002474,
+          "composite": 0.9655
+        },
+        "coherence": {
+          "n": 76,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.9728,
+          "mae": 0.1842,
+          "mean_score": 3.026,
+          "avg_latency_s": 1.3161,
+          "total_cost_usd": 0.002404,
+          "composite": 0.9716
+        },
+        "safety": {
+          "n": 76,
+          "pass_accuracy": 0.9342,
+          "cohen_kappa": 0.8684,
+          "spearman": 0.9558,
+          "mae": 0.2368,
+          "mean_score": 3.184,
+          "avg_latency_s": 1.3689,
+          "total_cost_usd": 0.002473,
+          "composite": 0.9224
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.039,
+        "faithfulness": 3.066,
+        "completeness": 2.947,
+        "coherence": 3.026,
+        "safety": 3.184
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.9641
+    },
+    {
+      "key": "claude",
+      "display_name": "Claude Opus 4.8",
+      "model_id": "claude-opus-4-8",
+      "judge_mode": "hf_claude",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9784,
+        "spearman_p": 0.0,
+        "score_mae": 0.2296,
+        "avg_latency_s": 15.6913,
+        "total_cost_usd": 2.62135,
+        "cost_per_item_usd": 0.034491
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "pass_accuracy": 0.9474,
+          "cohen_kappa": 0.8944,
+          "spearman": 0.9812,
+          "mae": 0.1711,
+          "mean_score": 3.145,
+          "avg_latency_s": 3.2869,
+          "total_cost_usd": 0.54485,
+          "composite": 0.7561
+        },
+        "faithfulness": {
+          "n": 76,
+          "pass_accuracy": 0.8553,
+          "cohen_kappa": 0.7164,
+          "spearman": 0.9095,
+          "mae": 0.3816,
+          "mean_score": 3.382,
+          "avg_latency_s": 3.4167,
+          "total_cost_usd": 0.560985,
+          "composite": 0.6771
+        },
+        "completeness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9468,
+          "spearman": 0.9586,
+          "mae": 0.3026,
+          "mean_score": 3.039,
+          "avg_latency_s": 3.0943,
+          "total_cost_usd": 0.52934,
+          "composite": 0.7668
+        },
+        "coherence": {
+          "n": 76,
+          "pass_accuracy": 0.6447,
+          "cohen_kappa": 0.3355,
+          "spearman": 0.6502,
+          "mae": 0.9474,
+          "mean_score": 4.079,
+          "avg_latency_s": 3.0157,
+          "total_cost_usd": 0.51583,
+          "composite": 0.4868
+        },
+        "safety": {
+          "n": 76,
+          "pass_accuracy": 0.4342,
+          "cohen_kappa": null,
+          "spearman": 0.1479,
+          "mae": 1.8026,
+          "mean_score": 4.987,
+          "avg_latency_s": 2.8777,
+          "total_cost_usd": 0.470345,
+          "composite": 0.3018
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.145,
+        "faithfulness": 3.382,
+        "completeness": 3.039,
+        "coherence": 4.079,
+        "safety": 4.987
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.7842
+    },
+    {
+      "key": "grok",
+      "display_name": "Grok 4",
+      "model_id": "grok-4",
+      "judge_mode": "hf_grok",
+      "metrics": {
+        "n": 76,
+        "pass_accuracy": 0.9868,
+        "cohen_kappa": 0.9731,
+        "precision": 1.0,
+        "recall": 0.9697,
+        "f1": 0.9846,
+        "spearman": 0.9341,
+        "spearman_p": 0.0,
+        "score_mae": 0.423,
+        "avg_latency_s": 15.2544,
+        "total_cost_usd": 0.78435,
+        "cost_per_item_usd": 0.01032
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 76,
+          "pass_accuracy": 0.9737,
+          "cohen_kappa": 0.9464,
+          "spearman": 0.9405,
+          "mae": 0.3158,
+          "mean_score": 2.921,
+          "avg_latency_s": 3.0333,
+          "total_cost_usd": 0.167067,
+          "composite": 0.8373
+        },
+        "faithfulness": {
+          "n": 76,
+          "pass_accuracy": 0.8289,
+          "cohen_kappa": 0.6649,
+          "spearman": 0.8971,
+          "mae": 0.3947,
+          "mean_score": 3.263,
+          "avg_latency_s": 3.1709,
+          "total_cost_usd": 0.165084,
+          "composite": 0.7397
+        },
+        "completeness": {
+          "n": 76,
+          "pass_accuracy": 0.8289,
+          "cohen_kappa": 0.6649,
+          "spearman": 0.5975,
+          "mae": 0.9211,
+          "mean_score": 3.316,
+          "avg_latency_s": 3.2243,
+          "total_cost_usd": 0.156285,
+          "composite": 0.6429
+        },
+        "coherence": {
+          "n": 76,
+          "pass_accuracy": 0.4342,
+          "cohen_kappa": -0.0062,
+          "spearman": 0.0997,
+          "mae": 1.6974,
+          "mean_score": 4.776,
+          "avg_latency_s": 3.1916,
+          "total_cost_usd": 0.146229,
+          "composite": 0.2938
+        },
+        "safety": {
+          "n": 76,
+          "pass_accuracy": 0.4605,
+          "cohen_kappa": 0.0406,
+          "spearman": 0.2105,
+          "mae": 1.7105,
+          "mean_score": 4.895,
+          "avg_latency_s": 2.6344,
+          "total_cost_usd": 0.149685,
+          "composite": 0.3385
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 2.921,
+        "faithfulness": 3.263,
+        "completeness": 3.316,
+        "coherence": 4.776,
+        "safety": 4.895
+      },
+      "parse_counts": {
+        "json": 380,
+        "regex": 0,
+        "fallback": 0
+      },
+      "errors": 0,
+      "error_detail": [],
+      "composite": 0.8322
+    },
+    {
+      "key": "panel",
+      "display_name": "GPT-4o panel (baseline)",
+      "model_id": "gpt-4o",
+      "judge_mode": "panel",
+      "metrics": {
+        "n": 26,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "spearman": 0.9718,
+        "spearman_p": 0.0,
+        "score_mae": 0.2462,
+        "avg_latency_s": 6.9983,
+        "total_cost_usd": 0.208986,
+        "cost_per_item_usd": 0.008038
+      },
+      "per_criterion": {
+        "correctness": {
+          "n": 26,
+          "pass_accuracy": 0.9615,
+          "cohen_kappa": 0.9231,
+          "spearman": 0.9694,
+          "mae": 0.2308,
+          "mean_score": 3.269,
+          "avg_latency_s": 1.4435,
+          "total_cost_usd": 0.040947,
+          "composite": 0.9355
+        },
+        "faithfulness": {
+          "n": 26,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.9673,
+          "mae": 0.2308,
+          "mean_score": 3.192,
+          "avg_latency_s": 1.4098,
+          "total_cost_usd": 0.046717,
+          "composite": 0.9594
+        },
+        "completeness": {
+          "n": 26,
+          "pass_accuracy": 0.9615,
+          "cohen_kappa": 0.9231,
+          "spearman": 0.9472,
+          "mae": 0.3077,
+          "mean_score": 3.192,
+          "avg_latency_s": 1.3887,
+          "total_cost_usd": 0.040247,
+          "composite": 0.9294
+        },
+        "coherence": {
+          "n": 26,
+          "pass_accuracy": 1.0,
+          "cohen_kappa": 1.0,
+          "spearman": 0.954,
+          "mae": 0.2308,
+          "mean_score": 3.269,
+          "avg_latency_s": 1.2406,
+          "total_cost_usd": 0.040903,
+          "composite": 0.9615
+        },
+        "safety": {
+          "n": 26,
+          "pass_accuracy": 0.5385,
+          "cohen_kappa": 0.1333,
+          "spearman": 0.3954,
+          "mae": 1.3462,
+          "mean_score": 4.615,
+          "avg_latency_s": 1.5158,
+          "total_cost_usd": 0.040173,
+          "composite": 0.5127
+        }
+      },
+      "per_criterion_mean": {
+        "correctness": 3.269,
+        "faithfulness": 3.192,
+        "completeness": 3.192,
+        "coherence": 3.269,
+        "safety": 4.615
+      },
+      "parse_counts": {},
+      "errors": 50,
+      "error_detail": [
+        {
+          "item_id": "g_sum_011",
+          "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"
+        },
+        {
+          "item_id": "g_sum_012",
+          "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"
+        },
+        {
+          "item_id": "g_sum_013",
+          "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"
+        },
+        {
+          "item_id": "g_sum_014",
+          "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"
+        },
+        {
+          "item_id": "g_sum_015",
+          "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"
+        }
+      ],
+      "composite": 0.9581
+    }
+  ],
+  "weights": {
+    "quality": 0.8,
+    "latency": 0.1,
+    "cost": 0.1
+  },
+  "winners": {
+    "overall": {
+      "key": "qwen3-8b",
+      "display_name": "Qwen3 8B",
+      "composite": 0.9646
+    },
+    "per_criterion": {
+      "correctness": {
+        "key": "qwen3-8b",
+        "display_name": "Qwen3 8B",
+        "n": 76,
+        "pass_accuracy": 0.9737,
+        "cohen_kappa": 0.9468,
+        "spearman": 0.9536,
+        "mae": 0.2237,
+        "mean_score": 3.197,
+        "avg_latency_s": 1.0793,
+        "total_cost_usd": 0.001534,
+        "composite": 0.9636
+      },
+      "faithfulness": {
+        "key": "panel",
+        "display_name": "GPT-4o panel (baseline)",
+        "n": 26,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "spearman": 0.9673,
+        "mae": 0.2308,
+        "mean_score": 3.192,
+        "avg_latency_s": 1.4098,
+        "total_cost_usd": 0.046717,
+        "composite": 0.9594
+      },
+      "completeness": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "spearman": 0.9652,
+        "mae": 0.2632,
+        "mean_score": 2.947,
+        "avg_latency_s": 1.3875,
+        "total_cost_usd": 0.002474,
+        "composite": 0.9655
+      },
+      "coherence": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "pass_accuracy": 1.0,
+        "cohen_kappa": 1.0,
+        "spearman": 0.9728,
+        "mae": 0.1842,
+        "mean_score": 3.026,
+        "avg_latency_s": 1.3161,
+        "total_cost_usd": 0.002404,
+        "composite": 0.9716
+      },
+      "safety": {
+        "key": "qwen3-14b",
+        "display_name": "Qwen3 14B",
+        "n": 76,
+        "pass_accuracy": 0.9342,
+        "cohen_kappa": 0.8684,
+        "spearman": 0.9558,
+        "mae": 0.2368,
+        "mean_score": 3.184,
+        "avg_latency_s": 1.3689,
+        "total_cost_usd": 0.002473,
+        "composite": 0.9224
+      }
+    }
+  }
+}
