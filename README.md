@@ -153,6 +153,54 @@ Requirements and fallbacks:
 - Each verdict records the model that produced it, so per-criterion models
   show up as-is in run files, the dashboard, and Langfuse scores.
 
+## Governance Console (Web UI)
+
+The governance console is a single-page dashboard served directly by the FastAPI
+server. No separate build step — just start the API and open a browser.
+
+### Quick start
+
+```bash
+# 1. Activate your virtualenv (if not already active)
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 2. Start the API server
+PYTHONPATH=src uvicorn app.api:app --reload
+
+# 3. Open the console
+#    http://localhost:8000
+```
+
+The console polls `GET /decisions` on load. If the store is empty you'll see a
+"No agent data yet" prompt — use the **⋯ → Seed data** button (no API key
+needed) to populate 144 synthetic evaluations across all 12 agents and reload.
+
+### Admin actions (⋯ menu, top-right)
+
+| Action | What it does | Key needed? |
+|---|---|---|
+| **Seed data** | Inserts synthetic eval history for all 12 agents | No |
+| **Simulate runtime** | Adds 30 eval rows per agent with drift scenarios (rag_weak safety incident, sum_weak latency spike) | No |
+| **Run rag_react_agent** | Runs the real LangGraph RAG agent on 1 gold task, scores it with the 5-judge panel, persists | Yes (`OPENAI_API_KEY`) |
+| **Run summarizer_refine_agent** | Same, for the refine-based summarizer | Yes |
+| **Run translator_backcheck_agent** | Same, for the back-translation checker | Yes |
+
+### Features
+
+- **Fleet table** — tier badge, verdict, confidence, score bar, drift alerts for every agent
+- **Decision spotlight** — click any row for the full governance decision: precedence chain, rationale, autonomy tier
+- **Policy simulator** — drag the risk slider; debounced live `POST /policy` call shows how the verdict changes
+- **Dark mode** — follows `prefers-color-scheme` automatically; no toggle needed
+
+### Windows
+
+```powershell
+$env:PYTHONPATH = "src"
+uvicorn app.api:app --reload
+```
+
+Then open http://localhost:8000 in your browser.
+
 ## Langfuse integration
 
 The platform can act as an evaluation layer on top of [Langfuse](https://langfuse.com):

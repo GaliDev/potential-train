@@ -11,8 +11,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ..schemas import AutonomyTier, TaskType
-from ..store import log_audit
+from ..storage import get_store
 from .autonomy import assign_tier
+from .policy_config import DEFAULT_POLICY, PolicyConfig
 from .profiles import compute_agent_performance
 
 
@@ -42,6 +43,7 @@ def decide(
     tier: AutonomyTier,
     task_risk: TaskRisk = TaskRisk.LOW,
     audit: bool = True,
+    config: PolicyConfig = DEFAULT_POLICY,
 ) -> PolicyDecision:
     """Apply governance rules to an (agent, task, tier, risk) tuple."""
     reasons: list[str] = []
@@ -60,7 +62,7 @@ def decide(
         reasons.append("Agent is trusted for full autonomy.")
 
     # High-risk tasks always require a human, regardless of tier (unless blocked).
-    if task_risk == TaskRisk.HIGH and allow:
+    if task_risk == TaskRisk.HIGH and allow and config.high_risk_requires_human:
         requires_approval = True
         reasons.append("High-risk task: human approval required by policy.")
 
@@ -74,7 +76,7 @@ def decide(
         reasons=reasons,
     )
     if audit:
-        log_audit("policy_decision", agent_id, decision.to_dict())
+        get_store().log_audit("policy_decision", agent_id, decision.to_dict())
     return decision
 
 
@@ -83,10 +85,11 @@ def decide_for_agent(
     task_type: TaskType,
     task_risk: TaskRisk = TaskRisk.LOW,
     audit: bool = True,
+    config: PolicyConfig = DEFAULT_POLICY,
 ) -> PolicyDecision | None:
     """Convenience: compute the agent's tier from history, then apply policy."""
     perf = compute_agent_performance(agent_id, task_type)
     if perf is None:
         return None
-    tier = assign_tier(perf).tier
-    return decide(agent_id, task_type, tier, task_risk, audit=audit)
+    tier = assign_tier(perf, config).tier
+    return decide(agent_id, task_type, tier, task_risk, audit=audit, config=config)

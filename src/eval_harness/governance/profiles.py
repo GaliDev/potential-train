@@ -12,7 +12,7 @@ import statistics
 from dataclasses import dataclass, field
 
 from ..schemas import Criterion, TaskType
-from ..store import EvalRow, RunSignalRow, fetch_evals, fetch_run_signals, list_agents
+from ..storage import EvalRow, RunSignalRow, get_store
 
 
 @dataclass
@@ -39,6 +39,7 @@ class AgentPerformance:
     avg_tokens: float = 0.0
     safety_flag_rate: float = 0.0
     operational_drift: float = 0.0
+    groundedness_drift: float = 0.0
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
@@ -92,6 +93,20 @@ def _operational_drift(signals: list[RunSignalRow]) -> float:
     return round(recent_err - older_err, 3)
 
 
+def _groundedness_drift(signals: list[RunSignalRow]) -> float:
+    """Recent-half mean groundedness minus older-half (negative = degrading)."""
+    grounded = [(s.created_at, s.groundedness) for s in signals if s.groundedness is not None]
+    if len(grounded) < 4:
+        return 0.0
+    ordered = sorted(grounded, key=lambda x: x[0])
+    mid = len(ordered) // 2
+    older = [g for _, g in ordered[:mid]]
+    recent = [g for _, g in ordered[mid:]]
+    if not older or not recent:
+        return 0.0
+    return round(statistics.fmean(recent) - statistics.fmean(older), 3)
+
+
 def _aggregate_signals(signals: list[RunSignalRow]) -> dict:
     if not signals:
         return {}
@@ -114,6 +129,7 @@ def _aggregate_signals(signals: list[RunSignalRow]) -> dict:
         "avg_tokens": round(statistics.fmean(tokens), 1) if tokens else 0.0,
         "safety_flag_rate": sum(1 for s in signals if s.safety_flag) / len(signals),
         "operational_drift": _operational_drift(signals),
+        "groundedness_drift": _groundedness_drift(signals),
     }
 
 
@@ -123,8 +139,9 @@ def compute_agent_performance(
     judge_mode: str | None = "panel",
 ) -> AgentPerformance | None:
     """Aggregate the store's eval rows for one agent into a profile."""
-    rows = fetch_evals(agent_id=agent_id, task_type=task_type, judge_mode=judge_mode)
-    signals = fetch_run_signals(agent_id=agent_id, task_type=task_type)
+    store = get_store()
+    rows = store.fetch_evals(agent_id=agent_id, task_type=task_type, judge_mode=judge_mode)
+    signals = store.fetch_run_signals(agent_id=agent_id, task_type=task_type)
     if not rows and not signals:
         return None
 
@@ -155,7 +172,7 @@ def compute_all_performance(
 ) -> list[AgentPerformance]:
     """Profiles for every registered agent that has evaluation history."""
     profiles: list[AgentPerformance] = []
-    for agent in list_agents(task_type):
+    for agent in get_store().list_agents(task_type):
         perf = compute_agent_performance(agent.agent_id, agent.task_type, judge_mode=judge_mode)
         if perf is not None:
             profiles.append(perf)
