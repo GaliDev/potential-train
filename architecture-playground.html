@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture diagram playground</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#37356B;--brand-2:#5B57C2;--paper:#F4F5F7;--ink:#14161B;--muted:#565C68;--faint:#878D99;--hair:#E6E8EC;--brand-wash:#EFEEFB}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--ink)}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--hair);flex-wrap:wrap}
+header h1{font-size:16px;margin:0;font-weight:600}
+header .sub{font-size:13px;color:var(--muted)}
+header .spacer{flex:1}
+button{font-family:inherit;border:1px solid var(--hair);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-weight:500}
+button:hover{border-color:var(--brand-2);color:var(--brand)}
+button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button:disabled{opacity:.45;cursor:default}
+.seg{display:inline-flex;background:#EDEFF2;border-radius:9px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--muted);font-weight:500;font-size:12.5px;padding:6px 12px;border-radius:7px}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(20,22,28,.08)}
+.split{display:grid;grid-template-columns:minmax(320px,38%) 1fr;height:calc(100vh - 52px)}
+.editor{border-right:1px solid var(--hair);display:flex;flex-direction:column;background:#fff;min-height:0}
+.editor label{padding:10px 14px 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+textarea{flex:1;border:0;resize:none;padding:14px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.55;outline:none;background:#FAFBFC;min-height:0}
+.preview{background:var(--paper);display:flex;flex-direction:column;min-height:0}
+.stepbar{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--hair);flex-wrap:wrap}
+.stepbar .cnt{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);min-width:54px}
+.stepbar .dots{display:flex;gap:5px}
+.stepbar .dots i{width:8px;height:8px;border-radius:50%;background:var(--hair);cursor:pointer;transition:.15s}
+.stepbar .dots i.on{background:var(--brand-2);transform:scale(1.2)}
+.stepbar button{width:32px;height:32px;padding:0;font-size:17px;line-height:1}
+.caption{padding:10px 18px 0;font-size:14px;color:var(--muted);line-height:1.45;min-height:3.2em}
+.caption b{color:var(--brand-2)}
+.preview-body{flex:1;overflow:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center}
+.preview-body.clickable{cursor:pointer}
+.preview .mermaid{background:#fff;border:1px solid var(--hair);border-radius:12px;padding:20px;min-width:min(100%,900px)}
+.preview .mermaid svg{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+.help{padding:10px 14px;font-size:12px;color:var(--muted);border-top:1px solid var(--hair);line-height:1.45}
+.help code{font-family:"IBM Plex Mono",monospace;font-size:11px;background:#EDEFF2;padding:1px 5px;border-radius:4px}
+.err{color:#BE3B34;font-size:12px;padding:0 14px 10px;font-family:"IBM Plex Mono",monospace;white-space:pre-wrap}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Architecture playground</h1>
+  <div class="seg" id="mode">
+    <button type="button" data-mode="edit">Edit full diagram</button>
+    <button type="button" data-mode="steps" class="on">Step reveal (8)</button>
+  </div>
+  <span class="spacer"></span>
+  <button id="reset">Reset</button>
+  <button id="copy">Copy source</button>
+  <button class="primary" id="live">Open in Mermaid Live</button>
+</header>
+<div class="split">
+  <div class="editor">
+    <label id="editor-label">Step 1 source</label>
+    <textarea id="src" spellcheck="false"></textarea>
+    <div class="err" id="err" hidden></div>
+    <div class="help" id="help-steps">
+      <b>Step reveal:</b> edit the current step's Mermaid on the left ·
+      <code>→</code> / click preview for next ·
+      <code>←</code> back · dots jump to a step.
+    </div>
+    <div class="help" id="help-edit" hidden>
+      <b>Edit full:</b>
+      <code>flowchart LR</code> ↔ <code>flowchart TB</code> ·
+      <code>A --> B</code> solid · <code>A -.-> B</code> dashed ·
+      <code>A ==>|label| B</code> thick feedback.
+    </div>
+  </div>
+  <div class="preview">
+    <div class="stepbar" id="stepbar">
+      <button type="button" id="prev" aria-label="Previous step">‹</button>
+      <span class="cnt" id="cnt">1 / 8</span>
+      <div class="dots" id="dots"></div>
+      <button type="button" id="next" aria-label="Next step">›</button>
+      <span style="font-size:12px;color:var(--faint);margin-left:auto">Click preview to advance</span>
+    </div>
+    <p class="caption" id="caption"></p>
+    <div class="preview-body clickable" id="preview-body" title="Click for next step">
+      <div class="mermaid" id="out"></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+const ARCH_CLASSES = `
+  classDef llm fill:#EFEEFB,stroke:#5B57C2,color:#37356B;
+  classDef det fill:#FFFFFF,stroke:#D2D6DD,color:#14161B;
+  classDef store fill:#FAFBFC,stroke:#37356B,color:#14161B,stroke-width:2px;
+  classDef ok fill:#E7F4ED,stroke:#1F7A52,color:#1F7A52;
+  classDef safe fill:#E7F4ED,stroke:#1F7A52,color:#1F7A52;
+  classDef console fill:#14161B,stroke:#14161B,color:#FFFFFF;`;
+
+const archSteps = [
+  { caption: "<b>Step 1 — The fleet.</b> Teams run multiple agents: different models, prompts, and LangGraph runtimes (RAG, summarizer, translator, medical RAG).",
+    diagram: `flowchart LR
+  Fleet["Managed fleet<br/>9 configs · 5 LangGraph agents"]
+  ${ARCH_CLASSES}
+  class Fleet llm` },
+  { caption: "<b>Step 2 — Five judges, then a deterministic aggregator.</b> Each judge scores one criterion (1–5); LangGraph's <span class='mono'>add</span> reducer merges the verdicts. Quality is a weighted mean; <b>safety is a hard gate</b> — <span class='mono'>overall_pass = quality ≥ τ AND safety.passed</span> — and the aggregator is plain code, no extra LLM.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet<br/>9 configs · 5 LangGraph agents"]
+  subgraph EVAL["Eval engine · LangGraph (5-judge panel)"]
+    direction TB
+    J1["correctness · Qwen3-8B"]
+    J2["faithfulness · Llama-3.1-8B"]
+    J3["completeness · Qwen3-14B"]
+    J4["coherence · Qwen3-14B"]
+    J5["safety · Qwen3-14B"]
+    AGG["Aggregator · deterministic<br/>quality = 0.35·corr + 0.30·faith + 0.20·comp + 0.15·coh<br/>overall_pass = quality ≥ τ AND safety.passed"]
+    J1 --> AGG
+    J2 --> AGG
+    J3 --> AGG
+    J4 --> AGG
+    J5 --> AGG
+  end
+  Fleet --> EVAL
+  ${ARCH_CLASSES}
+  class Fleet,J1,J2,J3,J4 llm
+  class J5 safe
+  class AGG det` },
+  { caption: "<b>Step 3 — Quality lands in the performance store.</b> Per-criterion scores, pass/fail, and rationales are written to SQLite alongside operational history.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  subgraph EVAL["Eval engine"]
+    direction TB
+    J1["correctness"] --> AGG["Aggregator"]
+    J2["faithfulness"] --> AGG
+    J3["completeness"] --> AGG
+    J4["coherence"] --> AGG
+    J5["safety"] --> AGG
+  end
+  Store[("Performance store<br/>evals · run_signals · audit")]
+  Fleet --> EVAL
+  AGG --> Store
+  ${ARCH_CLASSES}
+  class Fleet,J1,J2,J3,J4 llm
+  class J5 safe
+  class AGG det
+  class Store store` },
+  { caption: "<b>Step 4 — Two streams, one store.</b> Agents also emit ExecutionTrace telemetry (latency, tokens, retries, refusals); the simulator injects drift/incident scenarios.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  Sim["Runtime simulator<br/>drift / incident"]
+  subgraph EVAL["Eval engine"]
+    direction TB
+    J1["correctness"] --> AGG["Aggregator"]
+    J2["faithfulness"] --> AGG
+    J3["completeness"] --> AGG
+    J4["coherence"] --> AGG
+    J5["safety"] --> AGG
+  end
+  Store[("Performance store<br/>evals · run_signals · audit")]
+  Fleet --> EVAL
+  Fleet -. ExecutionTrace .-> Store
+  Sim --> Store
+  AGG --> Store
+  ${ARCH_CLASSES}
+  class Fleet,J1,J2,J3,J4 llm
+  class J5 safe
+  class Sim,AGG det
+  class Store store` },
+  { caption: "<b>Step 5 — Governance reads the history.</b> AgentPerformance signals aggregate quality + operational metrics and feed a deterministic decision engine.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  Sim["Runtime simulator"]
+  subgraph EVAL["Eval engine"]
+    direction TB
+    AGG["Aggregator"]
+  end
+  Store[("Performance store")]
+  subgraph GOV["Governance layer · deterministic"]
+    direction TB
+    Sig["Signals · AgentPerformance"]
+    Router["Task router"]
+    Auto["Autonomy calibrator"]
+    Drift["Drift / incident detector"]
+  end
+  Fleet --> EVAL
+  Fleet -. ExecutionTrace .-> Store
+  Sim --> Store
+  AGG --> Store
+  Store --> Sig
+  Sig --> Router
+  Sig --> Auto
+  Sig --> Drift
+  ${ARCH_CLASSES}
+  class Fleet llm
+  class Sim,AGG,Router,Auto,Drift det
+  class Store store
+  class Sig det` },
+  { caption: "<b>Step 6 — Precedence gate + console.</b> Router, autonomy, and drift feed a policy gate; decisions surface in the FastAPI web console with an audit trail.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  Store[("Performance store")]
+  subgraph GOV["Governance layer"]
+    direction TB
+    Sig["Signals"]
+    Router["Task router"]
+    Auto["Autonomy calibrator"]
+    Drift["Drift detector"]
+    Policy["Policy + precedence gate"]
+    Review["Performance reviews<br/>gpt-4o-mini · optional"]
+    Sig --> Router --> Policy
+    Sig --> Auto --> Policy
+    Sig --> Drift --> Policy
+    Sig --> Review
+  end
+  UI["FastAPI web console<br/>fleet · routing · KPIs · audit"]
+  Store --> Sig
+  Policy --> UI
+  Review --> UI
+  ${ARCH_CLASSES}
+  class Fleet,Review llm
+  class Router,Auto,Drift,Policy,Sig det
+  class Store store
+  class UI console` },
+  { caption: "<b>Step 7 — Judge validation.</b> Human gold labels benchmark every judge config (κ 0.97, 98.7% accuracy) before scores are trusted to drive decisions.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  Store[("Performance store")]
+  subgraph GOV["Governance layer"]
+    direction TB
+    Sig["Signals"] --> Policy["Policy gate"]
+    Sig --> Review["Reviews"]
+  end
+  UI["FastAPI web console"]
+  Gold["Human gold labels"]
+  Bench["Benchmark<br/>kappa · accuracy · cost"]
+  Store --> Sig
+  Store --> Bench
+  Gold --> Bench
+  Policy --> UI
+  Review --> UI
+  Bench --> UI
+  ${ARCH_CLASSES}
+  class Fleet,Review llm
+  class Policy,Sig det
+  class Store store
+  class Gold,Bench ok
+  class UI console` },
+  { caption: "<b>Step 8 — The feedback loop closes.</b> Governance routes the next task to the best eligible agent — or gates the call — back to the fleet.",
+    diagram: `flowchart LR
+  Fleet["Managed fleet"]
+  Store[("Performance store")]
+  subgraph GOV["Governance layer"]
+    direction TB
+    Sig["Signals"] --> Policy["Policy gate"]
+    Sig --> Review["Reviews"]
+  end
+  UI["FastAPI web console"]
+  Gold["Human gold labels"]
+  Bench["Benchmark"]
+  Fleet --> Store
+  Store --> Sig
+  Store --> Bench
+  Gold --> Bench
+  Policy --> UI
+  Review --> UI
+  Bench --> UI
+  Policy ==>|route / gate next call| Fleet
+  ${ARCH_CLASSES}
+  class Fleet,Review llm
+  class Policy,Sig det
+  class Store store
+  class Gold,Bench ok
+  class UI console` },
+];
+
+const FULL_DEFAULT = archSteps[archSteps.length - 1].diagram;
+const STEPS_DEFAULT = archSteps.map(s => ({ caption: s.caption, diagram: s.diagram }));
+
+const src = document.getElementById('src');
+const out = document.getElementById('out');
+const err = document.getElementById('err');
+const caption = document.getElementById('caption');
+const cnt = document.getElementById('cnt');
+const editorLabel = document.getElementById('editor-label');
+const stepbar = document.getElementById('stepbar');
+const helpSteps = document.getElementById('help-steps');
+const helpEdit = document.getElementById('help-edit');
+
+let mode = 'steps';
+let step = 0;
+let fullSource = FULL_DEFAULT;
+let timer;
+let editingStep = false;
+
+mermaid.initialize({
+  startOnLoad:false, securityLevel:'loose', theme:'base',
+  fontFamily:'"IBM Plex Sans", system-ui, sans-serif',
+  themeVariables:{
+    primaryColor:'#EFEEFB', primaryBorderColor:'#5B57C2', primaryTextColor:'#37356B',
+    lineColor:'#878D99', clusterBkg:'#FAFBFC', clusterBorder:'#D2D6DD',
+    edgeLabelBackground:'#FFFFFF', fontSize:'14px'
+  },
+  flowchart:{ useMaxWidth:true, htmlLabels:true, curve:'basis', nodeSpacing:26, rankSpacing:44 }
+});
+
+/* step dots */
+const dotsWrap = document.getElementById('dots');
+archSteps.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = 'Step ' + (i + 1);
+  d.onclick = () => goStep(i);
+  dotsWrap.appendChild(d);
+});
+
+async function render(code){
+  err.hidden = true;
+  try{
+    const { svg } = await mermaid.render('pg-' + Date.now(), code.trim());
+    out.innerHTML = svg;
+  }catch(e){
+    err.hidden = false;
+    err.textContent = e.message || String(e);
+    out.innerHTML = '';
+  }
+}
+
+function updateStepUi(){
+  cnt.textContent = `${step + 1} / ${archSteps.length}`;
+  caption.innerHTML = archSteps[step].caption;
+  editorLabel.textContent = `Step ${step + 1} source`;
+  dotsWrap.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i === step));
+  document.getElementById('prev').disabled = step === 0;
+  document.getElementById('next').disabled = step === archSteps.length - 1;
+}
+
+function syncTextareaFromStep(){
+  editingStep = true;
+  src.value = archSteps[step].diagram;
+  editingStep = false;
+}
+
+async function goStep(n){
+  if(mode !== 'steps') return;
+  step = Math.max(0, Math.min(archSteps.length - 1, n));
+  updateStepUi();
+  syncTextareaFromStep();
+  await render(archSteps[step].diagram);
+}
+
+function nextStep(){ if(step < archSteps.length - 1) goStep(step + 1); }
+function prevStep(){ if(step > 0) goStep(step - 1); }
+
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  const isSteps = m === 'steps';
+  stepbar.hidden = !isSteps;
+  caption.hidden = !isSteps;
+  helpSteps.hidden = !isSteps;
+  helpEdit.hidden = isSteps;
+  document.getElementById('preview-body').classList.toggle('clickable', isSteps);
+
+  if(isSteps){
+    goStep(step);
+  }else{
+    caption.innerHTML = '';
+    editorLabel.textContent = 'Mermaid source · docs/architecture.mmd';
+    src.value = fullSource;
+    render(fullSource);
+  }
+}
+
+src.addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const code = src.value;
+    if(mode === 'steps'){
+      if(!editingStep) archSteps[step].diagram = code;
+      await render(code);
+    }else{
+      fullSource = code;
+      await render(code);
+    }
+  }, 400);
+});
+
+document.getElementById('prev').onclick = prevStep;
+document.getElementById('next').onclick = nextStep;
+document.getElementById('preview-body').onclick = () => { if(mode === 'steps') nextStep(); };
+
+document.querySelectorAll('#mode button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+document.getElementById('reset').onclick = async () => {
+  if(mode === 'steps'){
+    STEPS_DEFAULT.forEach((d, i) => { archSteps[i].diagram = d.diagram; });
+    await goStep(0);
+  }else{
+    try{
+      const r = await fetch('docs/architecture.mmd');
+      fullSource = r.ok ? await r.text() : FULL_DEFAULT;
+    }catch{ fullSource = FULL_DEFAULT; }
+    src.value = fullSource;
+    render(fullSource);
+  }
+};
+
+document.getElementById('copy').onclick = () => navigator.clipboard.writeText(src.value);
+document.getElementById('live').onclick = () => {
+  const b64 = btoa(unescape(encodeURIComponent(src.value)));
+  window.open('https://mermaid.live/edit#base64:' + b64, '_blank');
+};
+
+document.addEventListener('keydown', e => {
+  if(mode !== 'steps') return;
+  if(e.target === src && !e.ctrlKey && !e.metaKey) return;
+  if(e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); nextStep(); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); prevStep(); }
+});
+
+async function boot(){
+  try{
+    const r = await fetch('docs/architecture.mmd');
+    if(r.ok) fullSource = await r.text();
+  }catch{ /* keep FULL_DEFAULT */ }
+  setMode('steps');
+}
+boot();
+</script>
+</body>
+</html>
