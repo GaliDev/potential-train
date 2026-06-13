@@ -4,8 +4,9 @@
 
 | | Name | Email |
 | --- | --- | --- |
-| Student 1 | _<!-- fill in -->_ | _<!-- fill in -->_ |
-| Student 2 | _<!-- fill in -->_ | _<!-- fill in -->_ |
+| Student 1 | Gali Sandler | gali.sandler@grunitech.com |
+| Student 2 | Elena Vinokur | elena.vinokur@grunitech.com |
+| Student 3 | Gil Heled | gil.heled@grunitech.com |
 
 This report follows the assignment structure (problem → market research →
 architecture → implementation → pitch). The pitch narrative is also in
