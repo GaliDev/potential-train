@@ -1,0 +1,427 @@
+# Presentation Playbook — Agent Workforce Governance
+## 8-Minute Final Project Pitch · 3-Person Team
+
+================================================================================
+0. STRATEGIC FRAMING (read this first)
+================================================================================
+
+The rubric (docs/Project Breakdown.pdf) is explicit about what wins and what loses:
+
+- Wins: problem -> solution -> architecture (diagram + data flow) -> EVALUATION
+  -> impact -> demo -> next steps. Treat the audience like managers/investors.
+  Show trade-offs and challenges. Big fonts (24+), few words, strong visuals.
+- Loses: opening with an "age of AI" monologue, reading slides verbatim,
+  scrolling through code, and -- the killer -- skipping rigorous evaluation
+  ("it works" is not proof).
+
+Your project is unusually strong on the exact axis most teams are weak on: a
+validated evaluation signal (Cohen's kappa 0.97 vs human gold) and an honest
+cost/quality trade-off story (57x cheaper open-model panel). Lead with that
+credibility. Your one differentiator versus every other team: you didn't just
+build an LLM feature, you PROVED your judge is trustworthy before letting it
+drive decisions.
+
+The single sentence the whole pitch hangs on:
+  "We turn a *validated* quality signal into governed action -- routing, earned
+   autonomy, and an audit trail -- closing the loop that eval tools, routers,
+   and governance suites each leave open."
+
+Demo safety: the rubric mandates a video backup for live demos.
+app/web/index.html has a built-in MOCK_AGENTS fallback that runs with no
+backend and no API key -- so Gali's demo works standalone even if Wi-Fi or the
+FastAPI process dies. Record the screen flow anyway as the final fallback.
+
+
+================================================================================
+1. TIMING & SPEAKER BREAKDOWN (8:00 hard cap)
+================================================================================
+
+Practice target is ~6:30 of spoken content so you land at 8:00 with transitions.
+One minute of the budget is reserved for wrap-up/buffer.
+
+  TIME        DUR    PRESENTER  SEGMENT                                    SLIDES
+  0:00-0:45   0:45   Elena      Hook + Problem                             1-2
+  0:45-1:25   0:40   Elena      Solution + system architecture (1 diagram) 3
+  1:25-3:00   1:35   Elena      The 5-Judge Graph: fan-out/join data flow  4
+  3:00-3:15   0:15   Gali       Demo handoff -- "what to watch for"        5
+  3:15-5:00   1:45   Gali       Live GUI walkthrough                       6
+  5:00-5:45   0:45   Gil        Benchmark setup + metrics                  7
+  5:45-6:45   1:00   Gil        Results: judge agreement + cost lever      8
+  6:45-7:15   0:30   Gil        Business impact + honest weak-agent story  9
+  7:15-8:00   0:45   All        Wrap / next steps / CTA + buffer           10
+
+Handoff discipline (rubric: "back and forth wastes time"): exactly three
+handoffs. Each is one sentence that hands the baton AND sets up the next person:
+- Elena -> Gali: "That's how the graph scores an agent. Gali will show what a
+  platform owner actually sees."
+- Gali -> Gil: "Every number on that dashboard rests on a judge we benchmarked
+  -- Gil."
+- Gil -> Elena: "Elena will close on where this goes."
+
+
+================================================================================
+2. SLIDE-BY-SLIDE BLUEPRINT
+================================================================================
+
+Design system note: the GUI uses IBM Plex Sans/Mono with an indigo brand
+(#37356B) and a green/amber/red status palette. Reuse those exact colors and the
+mono font in your slides so the deck and the live product look like one system.
+
+--------------------------------------------------------------------------------
+SLIDE 1 -- Title + Hook · Elena · 0:00-0:45
+--------------------------------------------------------------------------------
+Visual layout:
+- Full-bleed dark indigo background. Centered: "Agent Workforce Governance."
+  Sub: "Your AI fleet is a team with no manager."
+- Bottom strip: three names + roles in mono, and repo handle GaliDev/potential-train.
+- No bullet points. One product screenshot ghosted at 15% opacity behind title.
+
+Talking points (dev-voiced):
+- "You'd never let a new hire run unsupervised on day one. That's exactly how
+  most teams ship agents."
+- "Teams run fleets of agents -- different models, prompts, tools -- and manage
+  them blind."
+- Do NOT explain what an LLM is. Straight into the problem.
+
+--------------------------------------------------------------------------------
+SLIDE 2 -- The Problem · Elena · (within 0:00-0:45)
+--------------------------------------------------------------------------------
+Visual layout:
+- Four pain-point cards in a 2x2 grid, each with a one-line quote from discovery:
+    "We pick the model by vibes."
+    "We find out it regressed from a user complaint."
+    "Autonomy is all-or-nothing."
+    "Audit is an afterthought."
+- Right edge: faded logo wall of four incumbent categories (eval/observability,
+  routers, governance, agent-workforce) with a red "loop never closes" annotation.
+
+Talking points:
+- "Four product categories each solve one piece -- eval tools measure and stop,
+  routers route on price, governance suites enforce policy. Nobody connects
+  measured competence to governed action."
+- "That gap is our wedge."
+
+--------------------------------------------------------------------------------
+SLIDE 3 -- Solution + System Architecture · Elena · 0:45-1:25
+--------------------------------------------------------------------------------
+Visual layout:
+- The architecture diagram from report.md, simplified to 4 stages so it's
+  readable at 24pt: Fleet/Simulator -> Eval Engine (5-judge panel) ->
+  Performance Store -> Governance Layer.
+- Color-code: LLM-backed blocks indigo, deterministic blocks grey. Add one dashed
+  feedback-loop arrow from Governance back to Fleet labeled "route / gate next call."
+- Tag the eval engine block: "per-criterion open models via HF router."
+
+Talking points:
+- "Two streams feed a performance store: quality from the judge panel,
+  operational telemetry from real agent runs -- latency, tokens, retries,
+  refusals, groundedness."
+- "A deterministic governance layer reads that history to make four decisions:
+  routing, autonomy, reviews, policy -- with an audit log."
+- "The only LLM calls are the judges and optional reviews. Everything that ACTS
+  on a decision is deterministic and reproducible."
+
+--------------------------------------------------------------------------------
+SLIDE 4 -- The 5-Judge Graph (CENTERPIECE) · Elena · 1:25-3:00
+--------------------------------------------------------------------------------
+Visual layout -- animated fan-out/join schema (build in 3 clicks):
+
+                    +--------------+
+              +----►| correctness  | Qwen3-8B ---+
+              |     +--------------+             |
+              | +--►| faithfulness | Llama3.1-8B |
+   +-------+  | |   +--------------+             |   +------------------+   +-----+
+   | START |--+-+--►| completeness | Qwen3-14B   +--►|   AGGREGATE      |--►| END |
+   | item  |  | |   +--------------+             |   | (deterministic)  |   +-----+
+   +-------+  | |+-►| coherence    | Qwen3-14B   |   | weighted mean +  |
+              +-++-►| safety       | Qwen3-14B  -+   | HARD safety gate |
+                    +--------------+                 +------------------+
+                       verdicts: Annotated[list[JudgeVerdict], add]
+
+- Click 1: START fans out to all 5 judges -- animate them lighting up
+  SIMULTANEOUSLY to show they run in the same LangGraph superstep (parallel).
+- Click 2: the 5 verdicts converge into the aggregate node, with a callout:
+  verdicts: Annotated[list[JudgeVerdict], add] -> "LangGraph's reducer merges
+  the parallel branches into one list -- no race condition."
+- Click 3: the aggregate node expands to show the two-part logic.
+- Footer: PanelJudge.judge(item) -> "drop-in replacement for the single-call
+  baseline -- same interface, swappable orchestration."
+
+Aggregation logic (agents/aggregator.py):
+  quality = 0.35*correctness + 0.30*faithfulness + 0.20*completeness + 0.15*coherence
+  overall_pass = (quality >= PASS_THRESHOLD) AND safety.passed
+  -> "Safety is a GATE, not a weighted term."
+
+Talking points (dev-voiced):
+- "Five specialist judges, each scoring one dimension 1-5 with a rationale and
+  evidence quotes. Separation of concerns."
+- "They fan out from START and run in parallel in one superstep. The graph state
+  uses an add reducer, so the five verdicts merge into one list deterministically."
+- "The aggregator is NOT an LLM. It's a weighted mean plus a hard safety gate --
+  cheap, reproducible, and auditable. A high-quality answer that's unsafe still fails."
+- "Each criterion runs on a different open model -- the one that won that
+  criterion in our benchmark. Gil will defend why that's not over-engineering."
+
+--------------------------------------------------------------------------------
+SLIDE 5 -- Demo Handoff · Gali · 3:00-3:15
+--------------------------------------------------------------------------------
+Visual layout:
+- A single static screenshot of the Fleet view with 3 numbered annotations:
+  (1) autonomy tier column, (2) verdict column, (3) the red warning on rag_weak.
+
+Talking points:
+- "One screen. Each row is an agent, each column is a governance decision the
+  system made. Watch the blocked agent -- that's the system doing its job."
+
+--------------------------------------------------------------------------------
+SLIDE 6 -- Live GUI Walkthrough · Gali · 3:15-5:00
+--------------------------------------------------------------------------------
+This is a LIVE DEMO, not a slide. Backup: mock-mode build runs offline; have a
+screen recording as last resort. Rehearse the click path to the second.
+
+Exact click choreography (1:45 -- do not improvise):
+1. Fleet view (0:20) -- Land on leaderboard. Point at triage stats (Agents /
+   Blocked / Drifting / Need approval). "Six agents, three task types. One is
+   blocked, two are drifting -- at a glance."
+2. Click rag_weak (0:35) -- Drilldown opens. Walk the precedence chain:
+   safety -> drift -> autonomy -> policy, binding gate highlighted. "Safety
+   scored 2.4, below the floor. Safety is the first gate, so it hard-blocks."
+   Point at scorecard, operations tiles (uptime/error/p95/refusals + sparkline),
+   and the auto-generated performance review.
+3. Policy simulator (0:15) -- Toggle risk low -> high on a good agent. "Same
+   agent, high-risk task -- policy now forces human approval."
+4. Routing view (0:25) -- Click "Route next task" for RAG QA. Decision card
+   picks top eligible agent; ranking table shows ineligible agents greyed out.
+   "rag_weak is shown but never chosen -- below the pass-rate floor."
+5. KPIs view (0:10) -- Flash the split: Platform KPIs (is the judge trustworthy?)
+   vs Agent KPIs (is the fleet good?). "Two different questions, kept separate."
+
+Talking points:
+- Narrate decisions, not UI chrome. Every screen answers "so what should I do
+  about this agent?"
+- Mention once: "Static single-page app served by FastAPI -- zero build step,
+  and it falls back to mock data so it always demos."
+
+--------------------------------------------------------------------------------
+SLIDE 7 -- Benchmark Setup + Metrics · Gil · 5:00-5:45
+--------------------------------------------------------------------------------
+Visual layout:
+- Left: methodology arrow -- Single gpt-4o baseline -> Panel -> Cascade / Jury
+  -> per-criterion open-model panel. Satisfies the rubric's "start strong, then
+  improve."
+- Right: "how we measure" card:
+    Gold set: 76 hand-labeled items (RAG 16 / Summ 30 / Trans 30), each with
+      human gold_score + gold_pass.
+    Metrics: pass/fail accuracy, Cohen's kappa, Spearman rho, MAE vs human.
+    Bar to clear: >=80% accuracy, kappa>=0.6, rho>=0.7.
+    Composite for judge selection: quality 80% / latency 10% / cost 10%.
+
+Talking points:
+- "We don't trust a judge until it agrees with humans. Unit of truth = 76-item
+  gold set we hand-labeled."
+- "Cohen's kappa is chance-corrected agreement -- the honest metric."
+- "We benchmarked open models AND the frontier -- Claude Opus and Grok 4 -- on
+  the same items, same prompts."
+
+--------------------------------------------------------------------------------
+SLIDE 8 -- Results (CENTERPIECE for Gil) · Gil · 5:45-6:45
+--------------------------------------------------------------------------------
+Visual layout -- two charts side by side:
+
+(A) Agreement bar chart -- judge configs on X, Cohen's kappa on Y, dashed red
+    line at kappa=0.6 target. Every bar clears it. Annotate shipped open-model
+    panel: kappa 0.97, accuracy 98.7%, rho 0.97.
+
+(B) The money chart -- cost vs quality (this is the one that lands):
+    Judge                          Agreement(kappa)   Cost/item
+    Open-model panel (shipped)     ~0.95              $0.00014
+    GPT-4o panel                   0.97               $0.0080
+    Grok 4                         0.95               $0.0104
+    Claude Opus 4.8                0.97               $0.0346
+    Callout: "Same agreement band, ~57x cheaper than GPT-4o, ~250x cheaper than Claude."
+
+Per-criterion winners strip: correctness->Qwen3-8B, faithfulness->Llama-3.1-8B,
+completeness/coherence/safety->Qwen3-14B.
+
+Talking points:
+- "Headline: the shipped panel agrees with humans at kappa 0.97 / 98.7% accuracy
+  -- and costs $0.00014 an item."
+- "Counterintuitive: the frontier models LOST. Claude and Grok are lenient --
+  they hand out 5s on safety and coherence, which tanks discrimination (kappa
+  near zero on coherence). A judge that says 'everything's great' is useless."
+- "That's the improvement axis the rubric asks for: we cut cost ~98% without
+  losing agreement."
+
+--------------------------------------------------------------------------------
+SLIDE 9 -- Business Impact + Honest Weak-Agent Story · Gil · 6:45-7:15
+--------------------------------------------------------------------------------
+Visual layout:
+- Three big metric tiles (mono font): -94% inference cost · ~17x throughput
+  (15->248/hr) · served quality 65% -> 92%.
+- Below, amber callout: "Fleet uptime 93%, error 7%, p95 2.76s -- below target
+  on purpose."
+
+Talking points (this earns trust -- rubric rewards honesty):
+- "Routing to the cheapest agent that still passes cuts fleet inference cost
+  ~94%. ~17x faster than human review."
+- "Be straight: our fleet-wide operational KPIs MISS target. That's deliberate
+  -- the demo fleet contains weak agents and the simulator injects a safety
+  incident and a latency spike. The platform's whole job is to catch them.
+  Gating the three low-autonomy agents lifts served quality from 65% to 92%."
+- "We document the ugly numbers instead of hiding them -- because catching them
+  IS the product."
+
+--------------------------------------------------------------------------------
+SLIDE 10 -- Wrap / Next Steps / CTA · Elena closes · 7:15-8:00
+--------------------------------------------------------------------------------
+Visual layout:
+- Left: 3-line recap (validated judge -> governed action -> audit trail).
+- Right: "Next two weeks" list (3 items): predictive drift demotion · managed
+  multi-tenant store (SQLite is behind a Protocol) · plug into real Langfuse traces.
+- Footer: repo + "Demo controls: Seed / Simulate / Run agents."
+
+Talking points:
+- "Tech stack & why, in one breath: LangGraph for fan-out/join, per-criterion
+  open models via HF router for cheap trustworthy judging, Pydantic +
+  SQLite/SQLModel as a zero-setup system of record, FastAPI serving a static console."
+- "Production mindset: backend-agnostic LLM layer -- we ran the whole thing on
+  local Ollama when our cloud credits ran out, zero code changes. Storage is
+  behind a Protocol for multi-tenant scale."
+- CTA: "Point it at your own traces, validate the judge on your gold set, and
+  let earned autonomy replace all-or-nothing review."
+
+
+================================================================================
+3. COMPREHENSIVE Q&A BANK (The Grill Session)
+================================================================================
+
+Delivery rule: answer in <=2 sentences, cite the mechanism, then stop. Whoever
+owns the area answers; don't pile on.
+
+A. TECHNICAL & ARCHITECTURE
+
+Q1. How do the 5 judges interact -- and what happens when they disagree?
+They don't talk to each other; they're independent specialists that fan out in
+parallel and write to a shared state list via LangGraph's add reducer.
+"Disagreement" is resolved deterministically in the aggregator -- a weighted
+mean (correctness 0.35, faithfulness 0.30, completeness 0.20, coherence 0.15)
+for quality, with safety as a separate hard gate. So a 5/5 on quality with a
+failed safety verdict still fails overall -- by design, not by vote.
+
+Q2. Why a deterministic aggregator instead of a 6th "meta-judge" LLM?
+Reproducibility, cost, and auditability. The thing that decides pass/fail must
+give the same answer every time and be explainable to a risk team -- an extra
+LLM call adds latency, cost, and non-determinism for no measured accuracy gain
+(our deterministic aggregate already hits kappa 0.97).
+
+Q3. Latency and token cost with 5 calls -- sequential or concurrent?
+The graph fans out so the five run in the same superstep; wall-clock is bounded
+by the slowest judge, not the sum. On cost: five small open-model calls total
+~$0.00014/item -- cheaper than a single GPT-4o call (~$0.008) -- because we
+route each criterion to a cheap specialist instead of one expensive generalist.
+
+Q4. Five models is operational overhead. Isn't one good model simpler?
+We tested exactly that -- the single GPT-4o panel is our documented baseline.
+The per-criterion open panel matches its agreement (kappa 0.97) at ~1/57th the
+cost, and three of the five criteria share one model (Qwen3-14B), so it's
+effectively three model endpoints, all behind one HF router. The config is a
+30-line JSON map (config/judge_panel.json), not five services.
+
+Q5. How do you control bias and variance in LLM-as-judge?
+Three ways. Variance: open-model judges are temperature-pinned, prompted for
+strict JSON, and verdicts parsed leniently with a deterministic fallback. Bias:
+we MEASURED it -- our benchmark exposed that Claude and Grok are systematically
+lenient (mean safety score 5.0, kappa collapses), which is exactly why we didn't
+ship them. Calibration: every judge is validated against human gold labels and
+must clear kappa>=0.6 before its scores drive any governance decision.
+
+Q6. 76 gold items is small -- how do you know it generalizes?
+Agreed, it's a POC gold set; that's why we report chance-corrected kappa and
+Spearman, not just accuracy, and why we span three task families plus a clinical
+set. The architecture treats the gold set as a plug-in -- adding a task family
+is a new gold file + a registry entry, with no engine change (we did exactly
+that for medical-RAG). Scaling the gold set is the first production roadmap item.
+
+Q7. What if a judge model returns malformed output?
+The open-model path prompts for strict JSON and runs through parse_verdict,
+which has regex rescue and a deterministic fallback verdict -- in the latest
+benchmark, 0 hard failures and only a handful of regex rescues across 380 calls.
+OpenAI paths use structured outputs, so they're schema-valid by construction.
+
+Q8. Why LangGraph and not just asyncio.gather over 5 calls?
+For this panel alone you could; LangGraph earns its place because the same
+primitive powers our runtime agents (retrieve-check-retry, draft-verify-refine
+loops with conditional edges and state), and it gives us typed state, reducers,
+and a single .invoke interface. PanelJudge is a drop-in for the baseline judge
+precisely because the graph is hidden behind one method.
+
+Q9. Is the safety gate a single point of failure?
+It's intentionally conservative -- it can only fail an item, never rescue one,
+so the worst case is a false-negative (over-blocking), which in a governance
+product is the safe direction. Safety is also the criterion we watch most
+closely in the benchmark (Qwen3-14B: kappa 0.87 on safety).
+
+Q10. How is overall_pass actually computed? (if pressed on code)
+overall_pass = aggregate_score >= PASS_THRESHOLD AND safety.passed, where
+aggregate_score is the weighted mean over the four quality criteria present.
+It's ~10 lines in agents/aggregator.py -- deliberately boring.
+
+B. BUSINESS & PRODUCT
+
+Q11. Why is this a moat versus a single-prompt "judge wrapper"?
+A prompt wrapper gives you a score; it doesn't give you a defensible action. Our
+value is the closed loop -- a judge we've proven against human labels (kappa
+0.97) drives routing, earned autonomy, and a policy gate, all with an audit
+trail. The moat is the accumulating, validated performance history per agent --
+that data compounds and isn't reproducible by re-prompting GPT-4o.
+
+Q12. Who actually pays for this, and why now?
+Platform/ML-ops engineers and risk owners running multiple agents in production.
+"Now" because the incumbent categories (LangSmith/Phoenix, OpenRouter/Portkey,
+ServiceNow AI Control Tower, Agentforce) each own one pillar and none connect
+measured competence to governed action -- we're an early mover in the forming
+"agent workforce management" category.
+
+Q13. Does it scale beyond a demo with SQLite?
+SQLite is a zero-setup choice for the POC; storage sits behind a Protocol, so it
+swaps for a managed multi-tenant store without touching the engine. The compute
+that scales -- judging -- is already cheap (~$0.00014/item) and embarrassingly
+parallel.
+
+Q14. Your fleet KPIs miss target -- isn't that a failure?
+The opposite -- those misses are injected on purpose (a rag_weak safety
+incident, a sum_weak latency spike). A governance product with a perfectly
+healthy fleet would demonstrate nothing. The KPI that matters, judge agreement
+with humans, clears every target, and gating the weak agents lifts served
+quality 65%->92%.
+
+Q15. What's the realistic failure mode in production?
+Gold-set drift -- if real traffic diverges from the labeled distribution, judge
+agreement can decay silently. Mitigation is on the roadmap: periodic
+re-benchmarking against fresh human labels and using our own drift detector on
+the judge's agreement, not just the agents'.
+
+Q16. Two more weeks and a budget -- what do you build?
+Predictive governance: use accumulated history to demote/alert before an
+incident instead of reacting; expand the gold set with active-learning sampling
+on low-confidence items; and a managed store for multi-tenant pilots.
+
+
+================================================================================
+4. PRE-FLIGHT CHECKLIST
+================================================================================
+
+[ ] Deck colors/fonts match the GUI (indigo #37356B, IBM Plex Mono for numbers).
+[ ] All fonts >=24pt; no slide has more than ~20 words.
+[ ] Slide 4 (graph) and Slide 8 (cost-vs-quality) are the two most-polished visuals.
+[ ] Gali's demo runs in mock mode offline + a screen recording exists as backup.
+[ ] Rehearsed end-to-end at 6:30; the three handoffs are one sentence each.
+[ ] Every number on a slide traces to report.md or
+    hf_judges/results/benchmark_20260611T060823Z.json.
+[ ] Names/emails filled into the report title block before submission.
+
+Factual caveat: the GUI's KPI/agent numbers in mock mode (e.g. accuracy 86%,
+kappa 0.68) are illustrative mock values baked into index.html; your real,
+defensible numbers are the report/benchmark figures (98.7% / kappa 0.97 /
+$0.00014). Quote the real ones when asked -- don't read the mock dashboard as
+ground truth.
